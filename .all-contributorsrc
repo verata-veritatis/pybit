@@ -6,6 +6,7 @@
   "commit": false,
   "contributors": [
     {
+    
       "login": "verata-veritatis",
       "name": "verata-veritatis",
       "avatar_url": "https://avatars0.githubusercontent.com/u/9677388?v=4",
@@ -13,6 +14,7 @@
       "contributions": [
         "code",
         "doc"
+
       ]
     }
   ],
