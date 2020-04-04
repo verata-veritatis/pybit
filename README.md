@@ -61,7 +61,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
 <!-- markdownlint-disable -->
 <table>
   <tr>
-    <td align="center"><a href="https://github.com/tconley"><img src="https://avatars2.githubusercontent.com/u/1893207?v=4" width="100px;" alt=""/><br /><sub><b>Todd Conley</b></sub></a><br /><a href="https://github.com/verata-veritatis/pybit/commits?author=tconley" title="Code">💻</a></td>
+    <td align="center"><a href="https://github.com/tconley"><img src="https://avatars2.githubusercontent.com/u/1893207?v=4" width="100px;" alt=""/><br /><sub><b>Todd Conley</b></sub></a><br /><a href="https://github.com/verata-veritatis/pybit/commits?author=tconley" title="Code">💻</a> <a href="#ideas-tconley" title="Ideas, Planning, & Feedback">🤔</a></td>
   </tr>
 </table>
 
