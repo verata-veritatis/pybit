@@ -6,13 +6,15 @@
   "commit": false,
   "contributors": [
     {
-      "login": "tconley",
-      "name": "Todd Conley",
-      "avatar_url": "https://avatars2.githubusercontent.com/u/1893207?v=4",
-      "profile": "https://github.com/tconley",
+    
+      "login": "verata-veritatis",
+      "name": "verata-veritatis",
+      "avatar_url": "https://avatars0.githubusercontent.com/u/9677388?v=4",
+      "profile": "https://github.com/verata-veritatis",
       "contributions": [
         "code",
-        "ideas"
+        "doc"
+
       ]
     }
   ],
