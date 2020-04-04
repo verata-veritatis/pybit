@@ -26,7 +26,7 @@ setup(
         'Programming Language :: Python :: 3.8',
     ],
     keywords='bybit api connector',
-    packages=find_packages(where='pybit'),
+    packages=['pybit'],
     python_requires='>=3.6',
     install_requires=[
         'requests',
