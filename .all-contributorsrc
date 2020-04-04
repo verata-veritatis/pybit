@@ -1,0 +1,24 @@
+{
+  "files": [
+    "README.md"
+  ],
+  "imageSize": 100,
+  "commit": false,
+  "contributors": [
+    {
+      "login": "tconley",
+      "name": "Todd Conley",
+      "avatar_url": "https://avatars2.githubusercontent.com/u/1893207?v=4",
+      "profile": "https://github.com/tconley",
+      "contributions": [
+        "code"
+      ]
+    }
+  ],
+  "contributorsPerLine": 7,
+  "projectName": "pybit",
+  "projectOwner": "verata-veritatis",
+  "repoType": "github",
+  "repoHost": "https://github.com",
+  "skipCi": true
+}
