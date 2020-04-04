@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 '''
-pybit 1.0.0
+pybit
 ------------------------
 
 pybit is a lightweight and high-performance API connector for the 
@@ -17,7 +17,7 @@ https://github.com/verata-veritatis/pybit
 import time, hmac, json, logging, threading
 import requests, websocket
 
-VERSION = '1.0.0'
+VERSION = '1.0.1'
 
 class HTTP:
 
