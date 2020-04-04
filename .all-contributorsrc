@@ -1,0 +1,24 @@
+{
+  "files": [
+    "README.md"
+  ],
+  "imageSize": 100,
+  "commit": false,
+  "contributors": [
+    {
+      "login": "verata-veritatis",
+      "name": "verata-veritatis",
+      "avatar_url": "https://avatars0.githubusercontent.com/u/9677388?v=4",
+      "profile": "https://github.com/verata-veritatis",
+      "contributions": [
+        "code"
+      ]
+    }
+  ],
+  "contributorsPerLine": 7,
+  "projectName": "pybit",
+  "projectOwner": "verata-veritatis",
+  "repoType": "github",
+  "repoHost": "https://github.com",
+  "skipCi": true
+}
