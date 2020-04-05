@@ -17,55 +17,52 @@ https://github.com/verata-veritatis/pybit
 import time, hmac, json, logging, threading
 import requests, websocket
 
-VERSION = '1.0.1'
+VERSION = '1.0.2'
 
 class HTTP:
+    '''Connector for Bybit's HTTP API.
+    
+    Parameters
+    ------------------------
+    endpoint : str
+        Required parameter. The endpoint URL of the HTTP API, e.g. 
+        'https://api-testnet.bybit.com'.
+    api_key : str
+        Your API key. Required for authenticated endpoints. Defaults
+        to None.
+    api_secret : str
+        Your API secret key. Required for authenticated endpoints.
+        Defaults to None.
+    logging_level : int
+        The logging level of the built-in logger. Defaults to 
+        logging.INFO. Options are CRITICAL (50), ERROR (40), 
+        WARNING (30), INFO (20), DEBUG (10), or NOTSET (0).
+    conn_timeout : int
+        The timeout of each API request in seconds. Defaults to 10
+        seconds.
 
-    def __init__(self, api_key=None, api_secret=None, test_net=True,
-        timeout=10):
-        '''Connector for Bybit's HTTP API.
-        
-        Parameters
-        ------------------------
-        api_key : str
-            Your API key. Required for authenticated endpoints. Defaults
-            to None.
-        api_secret : str
-            Your API secret key. Required for authenticated endpoints.
-            Defaults to None.
-        test_net : bool
-            True/False. If true, endpoint will be set to testnet.
-            Defaults to True, and thus, is required as False if you 
-            are trying to access live trading.
-        timeout : int
-            The timeout of each API request in seconds. Defaults to 10
-            seconds.
+    '''
 
-        '''
+    def __init__(self, endpoint, api_key=None, api_secret=None,
+        logging_level=logging.INFO, http_timeout=10):
+        '''Initializes the HTTP class.'''
 
-        '''
-        if test_net:
-            self.endpoint = 'api-testnet.bybit.com'
-        else:
-            self.endpoint = 'api.bybit.com'   
-        '''
-
-        # Set endpoint URL.
-        if test_net:
-            self.endpoint = 'https://api-testnet.bybit.com'
-        else:
-            self.endpoint = 'https://api.bybit.com'
+        # Set the endpoint.
+        self.endpoint = endpoint
 
         # Setup logger.
+        logging.basicConfig(level=logging_level,
+            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+            datefmt='%Y-%m-%d %H:%M:%S')
         self.logger = logging.getLogger(__name__)
-        self.logger.debug('Initializing HTTP session.')
+        self.logger.info('Initializing HTTP session.')
 
         # Set API keys.
         self.api_key = api_key
         self.api_secret = api_secret
 
         # Set timeout.
-        self.timeout = timeout
+        self.timeout = http_timeout
 
         # Initialize requests session.
         self.client = requests.Session()
@@ -80,7 +77,7 @@ class HTTP:
     def exit(self):
         '''Closes the request session.'''
         self.client.close()
-        self.logger.debug('HTTP session closed.')
+        self.logger.info('HTTP session closed.')
 
     '''
     Market Data Endpoints
@@ -1204,7 +1201,7 @@ class HTTP:
                 v is not None}
         else:
             req_params = {}
-        self.logger.debug(f'Request -> {method} {path}: {req_params}')
+        self.logger.info(f'Request -> {method} {path}: {req_params}')
 
         # Prepare request; use 'params' for GET and 'data' for POST.
         if method == 'GET':
@@ -1223,51 +1220,78 @@ class HTTP:
         return s.json()
 
 class WebSocket:
+    '''Connector for Bybit's WebSocket API.
+    
+    Parameters
+    ------------------------
+    endpoint : str
+        Required parameter. The endpoint of the remote websocket.
+    api_key : str
+        Your API key. Required for authenticated endpoints. Defaults
+        to None.
+    api_secret : str
+        Your API secret key. Required for authenticated endpoints.
+        Defaults to None.
+    subscriptions : list
+        A list of desired topics to subscribe to. See API documentation
+        for more information. Defaults to an empty list, which will
+        raise an error.
+    logging_level : int
+        The logging level of the built-in logger. Defaults to 
+        logging.INFO. Options are CRITICAL (50), ERROR (40), 
+        WARNING (30), INFO (20), DEBUG (10), or NOTSET (0).
+    max_data_length : int
+        The maximum number of rows for the stored dataset. A smaller 
+        number will prevent performance or memory issues.
+    ping_interval : int
+        The number of seconds between each automated ping.
+    ping_timeout : int
+        The number of seconds to wait for 'pong' before an Exception is
+        raised.
+
+    Notes
+    ------------------------ 
+    Inverse Perpetual endpoints:
+    wss://stream-testnet.bybit.com/realtime
+    wss://stream.bybit.com/realtime
+
+    USDT Perpetual endpoints:
+    wss://stream-testnet.bybit.com/realtime_public
+    wss://stream-testnet.bybit.com/realtime_private
+    wss://stream.bybit.com/realtime_public
+    wss://stream.bybit.com/realtime_private
+
+    '''
     
     def __init__(self, endpoint, api_key=None, api_secret=None, 
-        subscriptions=[], data_cap=200):
-        '''Connector for Bybit's WebSocket API.
-        
-        Parameters
-        ------------------------
-        endpoint : str
-            Required parameter. The endpoint of the remote websocket.
-        api_key : str
-            Your API key. Required for authenticated endpoints. Defaults
-            to None.
-        api_secret : str
-            Your API secret key. Required for authenticated endpoints.
-            Defaults to None.
-        subscriptions : list
-            A list of desired topics to subscribe to. See API documentation
-            for more information. Defaults to an empty list, which will
-            raise an error.
-        data_cap : int
-            The maximum size of the data array retrieved from the API.
-            This can be changed for the desired application. Higher
-            values introduce latency and other slow-downs. Default value
-            is 200.
-
-        Notes
-        ------------------------ 
-        Inverse Perpetual endpoints:
-        wss://stream-testnet.bybit.com/realtime
-        wss://stream.bybit.com/realtime
-
-        USDT Perpetual endpoints:
-        wss://stream-testnet.bybit.com/realtime_public
-        wss://stream-testnet.bybit.com/realtime_private
-        wss://stream.bybit.com/realtime_public
-        wss://stream.bybit.com/realtime_private
-
-        '''
+        subscriptions=[], logging_level=logging.INFO, max_data_length=200,
+        ping_interval=30, ping_timeout=10):
+        '''Initializes the WebSocket class.'''
 
         if subscriptions == []:
             raise Exception('Subscription list cannot be empty!')
 
+        # Require symbol on 'trade' topic.
+        if 'trade' in subscriptions:
+            raise Exception('\'trade\' requires a ticker, e.g. '
+                '\'trade.BTCUSD\'.')
+
+        # Require currency on 'insurance' topic.
+        if 'insurance' in subscriptions:
+            raise Exception('\'insurance\' requires a currency, e.g. '
+                '\'insurance.BTC\'.')
+
+        # Require timeframe and ticker on 'klineV2' topic.
+        if 'klineV2' in subscriptions:
+            raise Exception('\'klineV2\' requires a timeframe and ticker, e.g.'
+                ' \'klineV2.5.BTCUSD\'.')
+
         # Setup logger.
+        logging.basicConfig(level=logging_level,
+            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+            datefmt='%Y-%m-%d %H:%M:%S')
         self.logger = logging.getLogger(__name__)
-        self.logger.debug('Initializing WebSocket.')
+        self.logger.info('Initializing WebSocket.')
 
         # Ensure authentication for private topics.
         if any(i in subscriptions for i in ['position', 'execution',
@@ -1282,9 +1306,13 @@ class WebSocket:
         self.api_key = api_key
         self.api_secret = api_secret
 
-        # Set parameters for WebSocket.
+        # Set topic subscriptions for WebSocket.
         self.subscriptions = subscriptions
-        self.data_cap = data_cap
+        self.max_length = max_data_length
+
+        # Set ping settings.
+        self.ping_interval = ping_interval
+        self.ping_timeout = ping_timeout
 
         # Set initial booleans.
         self.exited = False
@@ -1294,27 +1322,39 @@ class WebSocket:
         self.data = {}
         self._connect(self.endpoint)
 
-    def fetch(self, topics:list):
-        '''Fetches data from the subscribed topic..
+    def fetch(self, topic):
+        '''Fetches data from the subscribed topic.
         
         Parameters
         ------------------------
-        topic : list
-            Required parameter. The subscribed topic(s) to poll.
-
+        topic : str
+            Required parameter. The subscribed topic to poll.
         '''
 
-        try:
-            return [self.data[i].pop() for i in topics]
-        except KeyError as e:
-            self.logger.info(f'Subscription missing: {e}')
-            return []
+        # If topic isn't a string.
+        if not isinstance(topic, str):
+            self.logger.error('Topic argument must be a string.')
+            return
+
+        # If the topic given isn't in the initial subscribed list.
+        if topic not in self.subscriptions:
+            self.logger.error('You aren\'t subscribed to this topic.')
+            return
+
+        # Pop all trade, execution, or order data on each poll.
+        if topic.startswith(('trade', 'execution', 'order', \
+            'stop_order')) and not topic.startswith('orderBook'):
+            data = self.data[topic].copy()
+            self.data[topic] = []
+            return data
+        else:
+            return self.data[topic]
 
     def ping(self):
         '''Pings the remote server to test the connection. The status of the
-        ping can be monitored using fetch(['ping']).'''
+        connection can be monitored using ws.ping().'''
 
-        self.ws.send('{\'op\':\'ping\'}')
+        self.ws.send(json.dumps({'op': 'ping'}))
 
     def exit(self):
         '''Closes the websocket connection.'''
@@ -1346,11 +1386,13 @@ class WebSocket:
 
         self.ws = websocket.WebSocketApp(url, 
             on_message=self._on_message, on_close=self._on_close,
-            on_open=self._on_open, on_error=self._on_error,
-            keep_running=True)
+            on_open=self._on_open, on_error=self._on_error)
 
         # Setup the thread running WebSocketApp.
-        self.wst = threading.Thread(target=lambda: self.ws.run_forever())
+        self.wst = threading.Thread(target=lambda: self.ws.run_forever(
+            ping_interval=self.ping_interval, 
+            ping_timeout=self.ping_timeout
+        ))
 
         # Configure as daemon; start.
         self.wst.daemon = True
@@ -1382,7 +1424,11 @@ class WebSocket:
         # Initialize the topics.
         for topic in self.subscriptions:
             if topic not in self.data:
-                self.data[topic] = []
+                self.data[topic] = {}
+
+    def _find_index(self, source, target):
+        '''Find the index in source list of the targeted ID.'''
+        return next(i for i, j in enumerate(source) if j['id'] == target['id'])
 
     def _on_message(self, message):
         '''Parse a couple select messages. Similar structure to the
@@ -1391,27 +1437,99 @@ class WebSocket:
         # Load dict of message.
         msg_json = json.loads(message)
 
-        # If 'success' exists.
-        if 'success' in msg_json:   
+        # If 'success' exists and is True.
+        if 'success' in msg_json and msg_json['success']:   
 
-            # If 'request' exists, look for 'auth'.
-            if 'request' in msg_json and msg_json['request']['op'] == 'auth':
-                self.auth = True
+            # If 'request' exists.
+            if 'request' in msg_json:
 
-            # If 'ret_msg' exists, look for ping received.
-            if 'ret_msg' in msg_json and msg_json['ret_msg'] == 'pong':
-                self.data['pong'].append('Ping success.')
+                # If we get succesful auth, notify user.
+                if msg_json['request']['op'] == 'auth':
+                    self.logger.info('Authorization successful.')
+                    self.auth = True
 
-        # If 'topic' exists.
-        if 'topic' in msg_json:
+                # If we get successful subscription, notify user.
+                if msg_json['request']['op'] == 'subscribe':
+                    sub = msg_json['request']['args'][0]
+                    self.logger.info(f'Subscription to {sub} successful.')
+
+        # If 'success' exists but is False.
+        elif 'success' in msg_json and not msg_json['success']:
             
-            # Append new incoming data.
-            data_topic = self.data[msg_json['topic']]
-            data_topic.append(msg_json['data'])
+            response = msg_json['ret_msg']
+            if 'unknown topic' in response:
+                self.logger.error('Couldn\'t subscribe to topic.'
+                    f' Error: {response}.')
 
-            # Shrink length of topic if it exceeds the maximum.
-            if len(data_topic) > self.data_cap:
-                data_topic = data_topic[self.data_cap//2:]
+        elif 'topic' in msg_json:
+
+            topic = msg_json['topic']
+
+            # If incoming 'orderbookL2' data.
+            if 'orderBookL2' in topic:
+
+                # Record the initial snapshot.
+                if 'snapshot' in msg_json['type']:
+                    self.data[topic] = msg_json['data']
+
+                if 'delta' in msg_json['type']:
+
+                    # Delete.
+                    for entry in msg_json['data']['delete']:
+
+                        idx = self._find_index(self.data[topic], entry)
+                        self.data[topic].pop(idx)
+
+                    # Update.
+                    for entry in msg_json['data']['update']:
+
+                        idx = self._find_index(self.data[topic], entry)
+                        self.data[topic][idx] = entry
+
+                    # Insert.
+                    for entry in msg_json['data']['insert']:
+                        self.data[topic].append(entry)
+
+            # For incoming 'trade', 'execution', 'order' and 'stop_order'
+            # data.
+            elif any(i in topic for i in ['trade', 'execution', 'order', 
+                'stop_order']):
+
+                # Keep appending or create new list if not already created.
+                try:
+                    for i in msg_json['data']:
+                        self.data[topic].append(i)
+                except AttributeError:
+                    self.data[topic] = [msg_json['data']]
+
+                # If list is too long, pop the first entry.
+                if len(self.data[topic]) > self.max_length:
+                    self.data[topic].pop(0)
+
+            # If incoming 'instrument_info', 'klineV2', or 'wallet' data.
+            elif any(i in topic for i in ['insurance', 'klineV2', 'wallet']):
+
+                # Record incoming data.
+                self.data[topic] = msg_json['data'][0]
+
+            # If incoming 'instrument_info' data.
+            elif 'instrument_info' in topic:
+
+                # Record the initial snapshot.
+                if 'snapshot' in msg_json['type']:
+                    self.data[topic] = msg_json['data']
+
+                # Make updates according to delta response.
+                elif 'delta' in msg_json['type']:
+                    for i in msg_json['data']['update'][0]:
+                        self.data[topic][i] = msg_json['data']['update'][0][i]
+
+            # If incoming 'position' data.
+            elif 'position' in topic:
+
+                # Record incoming position data.
+                data = msg_json['data'][0]
+                self.data[topic][msg_json['data'][0]['symbol']] = data
 
     def _on_error(self, error):
         '''Exit on errors and raise exception.'''
