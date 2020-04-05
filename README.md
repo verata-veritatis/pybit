@@ -29,7 +29,10 @@ from pybit import HTTP, WebSocket
 ```
 Create an HTTP session and connect via WebSocket:
 ```python
-session = HTTP(test_net=False, api_key='...', api_secret='...')
+session = HTTP(endpoint='https://api.bybit.com', 
+    api_key='...', 
+    api_secret='...'
+)
 ws = WebSocket(
     endpoint='wss://stream.bybit.com/realtime', 
     subscriptions=['order', 'position'], 
@@ -51,7 +54,8 @@ for i in [5000, 5500, 6000]:
         price=i
     )
 # Check on your order and position through WebSocket.
-ws.fetch(['order', 'position'])
+ws.fetch('order')
+ws.fetch('position')
 ```
 Check out the example python files for more information on available
 endpoints and methods.
