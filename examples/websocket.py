@@ -52,8 +52,8 @@ subs = ['orderBookL2_25.BTCUSD', 'instrument_info.100ms.BTCUSD',
 # Connect!
 ws = WebSocket(endpoint, subscriptions=subs)
 
-# Let's fetch the orderbook for BTCUSD. The topic(s) must be a list.
-ws.fetch(['orderBookL2_25.BTCUSD'])
+# Let's fetch the orderbook for BTCUSD.
+ws.fetch('orderBookL2_25.BTCUSD')
 
-# We can also fetch a list of multiple results.
-ws.fetch(['instrument_info.100ms.BTCUSD', 'instrument_info.100ms.ETHUSD'])
+# We can also create a dict containing multiple results.
+{i: ws.fetch(i) for i in subs}

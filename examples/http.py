@@ -76,10 +76,11 @@ and api_secret.
 '''
 
 # Unauthenticated
-session_unauth = HTTP(test_net=False)
+session_unauth = HTTP(endpoint='https://api.bybit.com')
 
 # Authenticated
-session_auth = HTTP(api_key='...', api_secret='...', test_net=False)
+session_auth = HTTP(endpoint='https://api.bybit.com', api_key='...', 
+    api_secret='...')
 
 # Lets get market information about EOSUSD. Note that 'symbol' is
 # a required parameter as per the Bybit API documentation.
