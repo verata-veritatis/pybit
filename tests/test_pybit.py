@@ -1,7 +1,7 @@
 import unittest, time
 from pybit import HTTP, WebSocket
 
-session = HTTP()
+session = HTTP('https://api.bybit.com')
 ws = WebSocket('wss://stream.bybit.com/realtime',
                     subscriptions=['instrument_info.100ms.BTCUSD'])
 
