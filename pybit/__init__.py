@@ -1461,6 +1461,11 @@ class WebSocket:
                 self.logger.error('Couldn\'t subscribe to topic.'
                     f' Error: {response}.')
 
+            # If we get unsuccesful auth, notify user.
+            elif msg_json['request']['op'] == 'auth':
+                self.logger.info('Authorization failed. Please check your '
+                    'API keys and restart.')
+
         elif 'topic' in msg_json:
 
             topic = msg_json['topic']
