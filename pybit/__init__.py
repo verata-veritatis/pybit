@@ -37,14 +37,17 @@ class HTTP:
         The logging level of the built-in logger. Defaults to 
         logging.INFO. Options are CRITICAL (50), ERROR (40), 
         WARNING (30), INFO (20), DEBUG (10), or NOTSET (0).
-    conn_timeout : int
+    http_timeout : int
         The timeout of each API request in seconds. Defaults to 10
         seconds.
+    referral_id : str
+        An optional referer ID can be added to each request for 
+        identification.
 
     '''
 
     def __init__(self, endpoint, api_key=None, api_secret=None,
-        logging_level=logging.INFO, http_timeout=10):
+        logging_level=logging.INFO, http_timeout=10, referral_id=None):
         '''Initializes the HTTP class.'''
 
         # Set the endpoint.
@@ -73,6 +76,10 @@ class HTTP:
                 'Accept': 'application/json',
             }
         )
+
+        # Add referral ID to header.
+        if referral_id is not None:
+            self.client.headers.update({'Referer': referral_id})
 
     def exit(self):
         '''Closes the request session.'''
