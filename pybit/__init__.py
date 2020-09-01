@@ -1,31 +1,39 @@
 # -*- coding: utf-8 -*-
 
-'''
+"""
 pybit
 ------------------------
 
-pybit is a lightweight and high-performance API connector for the 
-RESTful and Websocket APIs of the Bybit exchange.
+pybit is a lightweight and high-performance API connector for the
+RESTful and WebSocket APIs of the Bybit exchange.
 
-Documentation can be found at 
+Documentation can be found at
 https://github.com/verata-veritatis/pybit
 
 :copyright: (c) 2020 verata-veritatis
 :license: MIT License
-'''
 
-import time, hmac, json, logging, threading
-import requests, websocket
+"""
 
-VERSION = '1.0.2'
+import time
+import hmac
+import json
+import logging
+import threading
+import requests
+import websocket
+
+from concurrent.futures import ThreadPoolExecutor
+
+VERSION = '1.0.3'
+
 
 class HTTP:
-    '''Connector for Bybit's HTTP API.
-    
-    Parameters
-    ------------------------
+    """
+    Connector for Bybit's HTTP API.
+
     endpoint : str
-        Required parameter. The endpoint URL of the HTTP API, e.g. 
+        Required parameter. The endpoint URL of the HTTP API, e.g.
         'https://api-testnet.bybit.com'.
     api_key : str
         Your API key. Required for authenticated endpoints. Defaults
@@ -34,29 +42,31 @@ class HTTP:
         Your API secret key. Required for authenticated endpoints.
         Defaults to None.
     logging_level : int
-        The logging level of the built-in logger. Defaults to 
-        logging.INFO. Options are CRITICAL (50), ERROR (40), 
+        The logging level of the built-in logger. Defaults to
+        logging.INFO. Options are CRITICAL (50), ERROR (40),
         WARNING (30), INFO (20), DEBUG (10), or NOTSET (0).
     http_timeout : int
         The timeout of each API request in seconds. Defaults to 10
         seconds.
     referral_id : str
-        An optional referer ID can be added to each request for 
+        An optional referer ID can be added to each request for
         identification.
 
-    '''
+    """
 
     def __init__(self, endpoint, api_key=None, api_secret=None,
-        logging_level=logging.INFO, http_timeout=10, referral_id=None):
-        '''Initializes the HTTP class.'''
+                 logging_level=logging.INFO, http_timeout=10, referral_id=None):
+        """Initializes the HTTP class."""
 
         # Set the endpoint.
         self.endpoint = endpoint
 
         # Setup logger.
-        logging.basicConfig(level=logging_level,
+        logging.basicConfig(
+            level=logging_level,
             format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-            datefmt='%Y-%m-%d %H:%M:%S')
+            datefmt='%Y-%m-%d %H:%M:%S'
+        )
         self.logger = logging.getLogger(__name__)
         self.logger.info('Initializing HTTP session.')
 
@@ -82,1004 +92,823 @@ class HTTP:
             self.client.headers.update({'Referer': referral_id})
 
     def exit(self):
-        '''Closes the request session.'''
+        """Closes the request session."""
         self.client.close()
         self.logger.info('HTTP session closed.')
 
-    '''
-    Market Data Endpoints
-    See https://bybit-exchange.github.io/docs/inverse/#t-marketdata
-    for more information.
+    def orderbook(self, **kwargs):
+        """
+        Get the orderbook.
 
-    /v2/public/orderBook/L2
-    /v2/public/kline/list
-    /v2/public/tickers
-    /v2/public/trading-records
-    /v2/public/symbols
-    '''
+        :param kwargs: See
+            https://bybit-exchange.github.io/docs/inverse/#t-orderbook.
+        :returns: Request results as dictionary.
+        """
 
-    def get_orderbook(self, symbol):
-        '''Get orderbook data.
-        
-        Parameters
-        ------------------------
-        symbol : str
-            Required parameter. The symbol of the market as a string, 
-            e.g. 'BTCUSD'.
+        return self._submit_request(
+            method='GET',
+            path=self.endpoint + '/v2/public/orderBook/L2',
+            query=kwargs
+        )
 
-        '''
+    def query_kline(self, **kwargs):
+        """
+        Get kline.
 
-        path = self.endpoint + '/v2/public/orderBook/L2'
-        query = {
-            'symbol': symbol
-        }
-        return self._submit_request(method='GET', path=path, query=query)
+        :param kwargs: See
+            https://bybit-exchange.github.io/docs/inverse/#t-querykline.
+        :returns: Request results as dictionary.
+        """
 
-    def get_klines(self, symbol, interval, from_time, limit=None):
-        '''Get kline data.
-        
-        Parameters
-        ------------------------
-        symbol : str
-            Required parameter. The symbol of the market as a string, 
-            e.g. 'BTCUSD'.
-        interval : str
-            Required parameter. The desired candle interval. Available
-            options are: 1, 3, 5, 15, 30, 60, 120, 240, 360, 720, 
-            D, M, W, Y.
-        from_time : int
-            Required parameter. The time from which to begin your lookup of
-            candles, in epoch time (seconds).
-        limit : int
-            The number of candles to fetch. Defaults to 500; maximum is
-            1000.
+        return self._submit_request(
+            method='GET',
+            path=self.endpoint + '/v2/public/kline/list',
+            query=kwargs
+        )
 
-        '''
+    def latest_information_for_symbol(self, **kwargs):
+        """
+        Get the latest information for symbol.
 
-        path = self.endpoint + '/v2/public/kline/list'
-        query = {
-            'symbol': symbol,
-            'interval': interval,
-            'from': from_time,
-            'limit': limit
-        }
-        return self._submit_request(method='GET', path=path, query=query)
+        :param kwargs: See
+            https://bybit-exchange.github.io/docs/inverse/#t-latestsymbolinfo.
+        :returns: Request results as dictionary.
+        """
 
-    def get_tickers(self, symbol=None):
-        '''Get ticker data.
-        
-        Parameters
-        ------------------------
-        symbol : str
-            The symbol of the market as a string, e.g. 'BTCUSD'.
+        return self._submit_request(
+            method='GET',
+            path=self.endpoint + '/v2/public/tickers',
+            query=kwargs
+        )
 
-        '''
+    def public_trading_records(self, **kwargs):
+        """
+        Get recent trades. You can find a complete history of trades on Bybit
+        at https://public.bybit.com/.
 
-        path = self.endpoint + '/v2/public/tickers'
-        query = {
-            'symbol': symbol
-        }
-        return self._submit_request(method='GET', path=path, query=query)
+        :param kwargs: See
+            https://bybit-exchange.github.io/docs/inverse/#t-latestsymbolinfo.
+        :returns: Request results as dictionary.
+        """
 
-    def get_trading_records(self, symbol, from_time=None, limit=None):
-        '''Get trading records.
-        
-        Parameters
-        ------------------------
-        symbol : str
-            Required parameter. The symbol of the market as a string, 
-            e.g. 'BTCUSD'.
-        from_time : int
-            The time from which to begin your lookup, in epoch time 
-            (seconds).
-        limit : int
-            The number of rows to fetch. Defaults to 500; maximum is 1000.
+        return self._submit_request(
+            method='GET',
+            path=self.endpoint + '/v2/public/trading-records',
+            query=kwargs
+        )
 
-        '''
+    def query_symbol(self):
+        """
+        Get symbol info.
 
-        path = self.endpoint + '/v2/public/trading-records'
-        query = {
-            'symbol': symbol,
-            'from': from_time,
-            'limit': limit
-        }
-        return self._submit_request(method='GET', path=path, query=query)
+        :returns: Request results as dictionary.
+        """
 
-    def get_symbols(self):
-        '''Get trading records.
-        
-        There are no parameters for this method.
+        return self._submit_request(
+            method='GET',
+            path=self.endpoint + '/v2/public/symbols'
+        )
 
-        '''
+    def liquidated_orders(self, **kwargs):
+        """
+        Retrieve the liquidated orders. The query range is the last seven days
+        of data.
 
-        path = self.endpoint + '/v2/public/symbols'
-        return self._submit_request(method='GET', path=path)
+        :param kwargs: See
+            https://bybit-exchange.github.io/docs/inverse/#t-query_liqrecords.
+        :returns: Request results as dictionary.
+        """
 
-    '''
-    Account Data Endpoints
-    See https://bybit-exchange.github.io/docs/inverse/#t-accountdata
-    for more information.
+        return self._submit_request(
+            method='GET',
+            path=self.endpoint + '/v2/public/liq-records',
+            query=kwargs
+        )
 
-    Active Orders:
-    /v2/private/order/create
-    /open-api/order/list
-    /v2/private/order/cancel
-    /v2/private/order/cancelAll
-    /open-api/order/replace
-    /v2/private/order
+    def query_mark_price_kline(self, **kwargs):
+        """
+        Query mark price kline (like query_kline but for mark price).
 
-    Conditional Orders:
-    /open-api/stop-order/create
-    /open-api/stop-order/list
-    /open-api/stop-order/cancel
-    /v2/private/stop-order/cancelAll
-    /open-api/stop-order/replace
-    /v2/private/stop-order
+        :param kwargs: See
+            https://bybit-exchange.github.io/docs/inverse/#t-markpricekline.
+        :returns: Request results as dictionary.
+        """
 
-    Leverage:
-    /user/leverage
-    /user/leverage/save
+        return self._submit_request(
+            method='GET',
+            path=self.endpoint + '/v2/public/mark-price-kline',
+            query=kwargs
+        )
 
-    Position:
-    /v2/private/position/list
-    /position/change-position-margin
-    /open-api/position/trading-stop
+    def open_interest(self, **kwargs):
+        """
+        Gets the total amount of unsettled contracts. In other words, the total
+        number of contracts held in open positions.
 
-    Risk Limit:
-    /open-api/wallet/risk-limit/list
-    /open-api/wallet/risk-limit
+        :param kwargs: See
+            https://bybit-exchange.github.io/docs/inverse/#t-marketopeninterest.
+        :returns: Request results as dictionary.
+        """
 
-    Funding:
-    /open-api/funding/prev-funding-rate
-    /open-api/funding/prev-funding
-    /open-api/funding/predicted-funding
+        return self._submit_request(
+            method='GET',
+            path=self.endpoint + '/v2/public/open-interest',
+            query=kwargs
+        )
 
-    API Key Info:
-    /open-api/api-key
-    '''
+    def latest_big_deal(self, **kwargs):
+        """
+        Obtain filled orders worth more than 500,000 USD within the last 24h.
 
-    '''
-    Active Orders
-    '''
+        :param kwargs: See
+            https://bybit-exchange.github.io/docs/inverse/#t-marketbigdeal.
+        :returns: Request results as dictionary.
+        """
 
-    def place_active_order(self, symbol, order_type, side, qty, price=None, 
-        time_in_force='GoodTillCancel', take_profit=None, stop_loss=None, 
-        reduce_only=False, close_on_trigger=False, order_link_id=None):
-        '''Places a standard order.
-        
-        Parameters
-        ------------------------
-        symbol : str
-            Required parameter. The symbol of the market as a string, 
-            e.g. 'BTCUSD'.
-        order_type : str
-            Required parameter. The type of order to place. The options 
-            are 'Market' or 'Limit'.
-        side : str
-            Required parameter. Which side of the orderbook to place an
-            order. The options are 'Buy' or 'Sell'.
-        qty : int
-            Required parameter. Number of contracts for the order. Must
-            be an integer and cannot be fractional.
-        price : float
-            Required parameter ONLY if the order_type is 'Limit'. The price 
-            at which to set the order.  Must be rounded to the nearest 
-            half (0.5).
-        time_in_force : str
-            The execution method of the order. 'GoodTillCancel' will keep
-            your order alive until you cancel it. 'ImmediateOrCancel' will
-            cancel the order if it is not at least partially filled
-            immediately. 'FillOrKill' forces the order to be completely
-            filled immediately, otherwise it is canceled. 'PostOnly' will
-            cancel the order if it would have been executed immediately
-            at market, preventing accidental fills.
-        take_profit : float
-            The price at which to set an optional take profit order once
-            your order is filled. Must be rounded to the nearest half 
-            (0.5).
-        stop_loss : float
-            The price at which to set an optional stop loss order once
-            your order is filled. Must be rounded to the nearest half 
-            (0.5).
-        reduce_only : bool
-            The order wqill only execute if it reduces your open position.
-            otherwise it will be canceled.
-        close_on_trigger : bool
-            Useful for orders that are meant to close your position. When
-            this order is filled, it will close your position and cancel
-            all orders for the given market.
-        order_link_id : str
-            Used to set a custom order ID that can be later used to 
-            retrieve information about this particular order.
+        return self._submit_request(
+            method='GET',
+            path=self.endpoint + '/v2/public/big-deal',
+            query=kwargs
+        )
 
-        '''
+    def long_short_ratio(self, **kwargs):
+        """
+        Gets the Bybit long-short ratio.
 
-        if symbol.endswith('USDT'):
+        :param kwargs: See
+            https://bybit-exchange.github.io/docs/inverse/#t-marketaccountratio.
+        :returns: Request results as dictionary.
+        """
+
+        return self._submit_request(
+            method='GET',
+            path=self.endpoint + '/v2/public/account-ratio',
+            query=kwargs
+        )
+
+    def place_active_order(self, **kwargs):
+        """
+        Places an active order. For more information, see
+        https://bybit-exchange.github.io/docs/inverse/#t-activeorders.
+
+        :param kwargs: See
+            https://bybit-exchange.github.io/docs/inverse/#t-activeorders.
+        :returns: Request results as dictionary.
+        """
+
+        if kwargs['symbol'].endswith('USDT'):
             path = self.endpoint + '/private/linear/order/create'
         else:
             path = self.endpoint + '/v2/private/order/create'
-        query = {
-            'side': side,
-            'symbol': symbol,
-            'order_type': order_type,
-            'qty': qty,
-            'price': price,
-            'time_in_force': time_in_force,
-            'take_profit': take_profit,
-            'stop_loss': stop_loss,
-            'reduce_only': reduce_only,
-            'close_on_trigger': close_on_trigger,
-            'order_link_id': order_link_id
-        }
-        return self._submit_request(method='POST', path=path, query=query, 
-            auth=True)
+        return self._submit_request(
+            method='POST',
+            path=path,
+            query=kwargs,
+            auth=True
+        )
 
-    def get_active_order(self, order_id=None, order_link_id=None, symbol=None,
-        order=None, page=None, limit=None, order_status=None):
-        '''Get information about an open order.
-        
-        Parameters
-        ------------------------
-        order_id : str
-            This is the ID set by the exchange.
-        order_link_id : str
-            This is the ID set by the user.
-        symbol : str
-            The symbol of the market as a string, e.g. 'BTCUSD'. Used to
-            filter your results.
-        order : int
-            Used to sort orders by the creation date, in epoch time 
-            (seconds).
-        page : int
-            The number of pages of data to retrieve.
-        limit : int
-            The total number of orders to retrieve.
-        order_status : str
-            Filter results by the status of the order.
+    def place_active_order_bulk(self, orders: list, max_in_parallel=10):
+        """
+        Places multiple active orders in bulk using multithreading. For more
+        information on place_active_order, see
+        https://bybit-exchange.github.io/docs/inverse/#t-activeorders.
 
-        Notes
-        ------------------------
-        Since the symbol parameter is not required, we need to handle a
-        situation where we're trying to determine whether to use the
-        inverse or linear URLs, yet no symbol is given. In this
-        case, Python will raise an AttributeError when attempting to
-        use 'endswith()' on a NoneType. We can handle catch this exception 
-        and default to the inverse perp URL.
+        :param list orders: A list of orders and their parameters.
+        :param max_in_parallel: The number of requests to be sent in parallel.
+            Note that you are limited to 50 requests per second.
+        :returns: Future request result dictionaries as a list.
+        """
 
-        '''
+        with ThreadPoolExecutor(max_workers=max_in_parallel) as executor:
+            executions = [
+                executor.submit(
+                    self.place_active_order,
+                    **order
+                ) for order in orders
+            ]
+        executor.shutdown()
+        return [execution.result() for execution in executions]
 
-        try:
-            if symbol.endswith('USDT'):
-                path = self.endpoint + '/private/linear/order/list'
-            else:
-                path = self.endpoint + '/open-api/order/list'
-        except AttributeError:
+    def get_active_order(self, **kwargs):
+        """
+        Gets an active order. For more information, see
+        https://bybit-exchange.github.io/docs/inverse/#t-getactive.
+
+        :param kwargs: See
+            https://bybit-exchange.github.io/docs/inverse/#t-getactive.
+        :returns: Request results as dictionary.
+        """
+
+        if kwargs['symbol'].endswith('USDT'):
+            path = self.endpoint + '/private/linear/order/list'
+        else:
             path = self.endpoint + '/open-api/order/list'
-        query = {
-            'order_id': order_id,
-            'order_link_id': order_link_id,
-            'symbol': symbol,
-            'order': order,
-            'page': page,
-            'limit': limit,
-            'order_status': order_status
-        }
-        return self._submit_request(method='GET', path=path, query=query,
-            auth=True)
+        return self._submit_request(
+            method='GET',
+            path=path,
+            query=kwargs,
+            auth=True
+        )
 
-    def cancel_active_order(self, symbol, order_id=None, order_link_id=None):
-        '''Cancels an open order.
-        
-        Parameters
-        ------------------------
-        symbol : str
-            Required parameter. The symbol of the market as a string, 
-            e.g. 'BTCUSD'.
-        order_id : str
-            Required parameter ONLY if order_link_id is not provided.
-            This is the ID set by the exchange.
-        order_link_id : str
-            Required parameter ONLY if order_id is not provided.
-            This is the ID set by the user.
+    def cancel_active_order(self, **kwargs):
+        """
+        Cancels an active order. For more information, see
+        https://bybit-exchange.github.io/docs/inverse/#t-cancelactive.
 
-        '''
+        :param kwargs: See
+            https://bybit-exchange.github.io/docs/inverse/#t-cancelactive.
+        :returns: Request results as dictionary.
+        """
 
-        if symbol.endswith('USDT'):
+        if kwargs['symbol'].endswith('USDT'):
             path = self.endpoint + '/private/linear/order/cancel'
         else:
             path = self.endpoint + '/v2/private/order/cancel'
-        query = {
-            'symbol': symbol,
-            'order_id': order_id,
-            'order_link_id': order_link_id
-        }
-        return self._submit_request(method='POST', path=path, query=query,
-            auth=True)
+        return self._submit_request(
+            method='POST',
+            path=path,
+            query=kwargs,
+            auth=True
+        )
 
-    def cancel_all_active_orders(self, symbol):
-        '''Cancels all open orders for a given symbol.
-        
-        Parameters
-        ------------------------
-        symbol : str
-            Required parameter. The symbol of the market as a string, 
-            e.g. 'BTCUSD'.
+    def cancel_active_order_bulk(self, orders: list, max_in_parallel=10):
+        """
+        Cancels multiple active orders in bulk using multithreading. For more
+        information on cancel_active_order, see
+        https://bybit-exchange.github.io/docs/inverse/#t-activeorders.
 
-        '''
+        :param list orders: A list of orders and their parameters.
+        :param max_in_parallel: The number of requests to be sent in parallel.
+            Note that you are limited to 50 requests per second.
+        :returns: Future request result dictionaries as a list.
+        """
 
-        path = self.endpoint + '/v2/private/order/cancelAll'
-        query = {
-            'symbol': symbol
-        }
-        return self._submit_request(method='POST', path=path, query=query,
-            auth=True)
+        with ThreadPoolExecutor(max_workers=max_in_parallel) as executor:
+            executions = [
+                executor.submit(
+                    self.cancel_active_order,
+                    **order
+                ) for order in orders
+            ]
+        executor.shutdown()
+        return [execution.result() for execution in executions]
 
-    def replace_active_order(self, order_id, symbol, p_r_qty=None, 
-        p_r_price=None):
-        '''Replaces or amends an open order.
-        
-        Parameters
-        ------------------------
-        order_id : str
-            Required parameter. This is the ID set by the exchange.
-        symbol : str
-            Required parameter. The symbol of the market as a string, 
-            e.g. 'BTCUSD'.
-        p_r_qty : int
-            Used to change the quantity of your current order.
-        p_r_price : float
-            Used to change the price at which the current order is set.
-            Must be rounded to the nearest half (0.5).
+    def cancel_all_active_orders(self, **kwargs):
+        """
+        Cancel all active orders that are unfilled or partially filled. Fully
+        filled orders cannot be cancelled.
 
-        '''
+        :param kwargs: See
+            https://bybit-exchange.github.io/docs/inverse/#t-cancelallactive.
+        :returns: Request results as dictionary.
+        """
 
-        path = self.endpoint + '/open-api/order/replace'
-        query = {
-            'order_id': order_id,
-            'symbol': symbol,
-            'p_r_qty': p_r_qty,
-            'p_r_price': p_r_price
-        }
-        return self._submit_request(method='POST', path=path, query=query,
-            auth=True)
+        return self._submit_request(
+            method='POST',
+            path=self.endpoint + '/v2/private/order/cancelAll',
+            query=kwargs,
+            auth=True
+        )
 
-    def query_active_order(self, symbol, order_id=None, order_link_id=None):
-        '''Search for a particular order.
-        
-        Parameters
-        ------------------------
-        symbol : str
-            Required parameter. The symbol of the market as a string, 
-            e.g. 'BTCUSD'.
-        order_id : str
-            Required parameter ONLY if order_link_id is not provided.
-            This is the ID set by the exchange.
-        order_link_id : str
-            Required parameter ONLY if order_id is not provided.
-            This is the ID set by the user.
+    def replace_active_order(self, **kwargs):
+        """
+        Replace order can modify/amend your active orders.
 
-        '''
+        :param kwargs: See
+            https://bybit-exchange.github.io/docs/inverse/#t-replaceactive.
+        :returns: Request results as dictionary.
+        """
 
-        if symbol.endswith('USDT'):
+        return self._submit_request(
+            method='POST',
+            path=self.endpoint + '/open-api/order/replace',
+            query=kwargs,
+            auth=True
+        )
+
+    def replace_active_order_bulk(self, orders: list, max_in_parallel=10):
+        """
+        Replaces multiple active orders in bulk using multithreading. For more
+        information on replace_active_order, see
+        https://bybit-exchange.github.io/docs/inverse/#t-replaceactive.
+
+        :param list orders: A list of orders and their parameters.
+        :param max_in_parallel: The number of requests to be sent in parallel.
+            Note that you are limited to 50 requests per second.
+        :returns: Future request result dictionaries as a list.
+        """
+
+        with ThreadPoolExecutor(max_workers=max_in_parallel) as executor:
+            executions = [
+                executor.submit(
+                    self.replace_active_order,
+                    **order
+                ) for order in orders
+            ]
+        executor.shutdown()
+        return [execution.result() for execution in executions]
+
+    def query_active_order(self, **kwargs):
+        """
+        Query real-time active order information.
+
+        :param kwargs: See
+            https://bybit-exchange.github.io/docs/inverse/#t-queryactive.
+        :returns: Request results as dictionary.
+        """
+
+        if kwargs['symbol'].endswith('USDT'):
             path = self.endpoint + '/private/linear/order/search'
         else:
             path = self.endpoint + '/v2/private/order'
-        query = {
-            'symbol': symbol,
-            'order_id': order_id,
-            'order_link_id': order_link_id
-        }
-        return self._submit_request(method='GET', path=path, query=query,
-            auth=True)
+        return self._submit_request(
+            method='GET',
+            path=path,
+            query=kwargs,
+            auth=True
+        )
 
-    '''
-    Conditional Orders
-    '''
+    def place_conditional_order(self, **kwargs):
+        """
+        Places a conditional order. For more information, see
+        https://bybit-exchange.github.io/docs/inverse/#t-placecond.
 
-    def place_conditional_order(self, symbol, order_type, side, qty, 
-        base_price, stop_px, price=None, time_in_force='GoodTillCancel', 
-        trigger_by=None, close_on_trigger=False, order_link_id=None):
-        '''Places a conditional order.
-        
-        Parameters
-        ------------------------
-        symbol : str
-            Required parameter. The symbol of the market as a string, 
-            e.g. 'BTCUSD'.
-        order_type : str
-            Required parameter. The type of order to place. The options 
-            are 'Market' or 'Limit'.
-        side : str
-            Required parameter. Which side of the orderbook to place an
-            order. The options are 'Buy' or 'Sell'.
-        qty : int
-            Required parameter. Number of contracts for the order. Must
-            be an integer and cannot be fractional.
-        base_price : float
-            Required parameter. Used to compare with the value of 'stop_px', 
-            to decide whether your conditional order will be triggered by 
-            the crossing trigger price from upper side or lower side, 
-            determining the expected direction of the current conditional 
-            order. Must be rounded to the nearest half (0.5).
-        stop_px : float
-            Required parameter. The trigger price. Must be rounded to the 
-            nearest half (0.5).
-        price : float
-            Required parameter ONLY if the order_type is 'Limit'. The price 
-            at which to set the order.  Must be rounded to the nearest 
-            half (0.5).
-        time_in_force : str
-            The execution method of the order. 'GoodTillCancel' will keep
-            your order alive until you cancel it. 'ImmediateOrCancel' will
-            cancel the order if it is not at least partially filled
-            immediately. 'FillOrKill' forces the order to be completely
-            filled immediately, otherwise it is canceled. 'PostOnly' will
-            cancel the order if it would have been executed immediately
-            at market, preventing accidental fills.
-        trigger_by : str
-            The price used for the trigger. Options are 'LastPrice', 
-            'MarkPrice', and 'IndexPrice'. Defaults to 'LastPrice'.
-        close_on_trigger : bool
-            Useful for orders that are meant to close your position. When
-            this order is filled, it will close your position and cancel
-            all orders for the given market.
-        order_link_id : str
-            Used to set a custom order ID that can be later used to 
-            retrieve information about this particular order.
+        :param kwargs: See
+            https://bybit-exchange.github.io/docs/inverse/#t-placecond.
+        :returns: Request results as dictionary.
+        """
 
-        '''
+        return self._submit_request(
+            method='POST',
+            path=self.endpoint + '/open-api/stop-order/create',
+            query=kwargs,
+            auth=True
+        )
 
-        path = self.endpoint + '/open-api/stop-order/create'
-        query = {
-            'side': side,
-            'symbol': symbol,
-            'order_type': order_type,
-            'qty': qty,
-            'price': price,
-            'base_price': base_price,
-            'stop_px': stop_px,
-            'time_in_force': time_in_force,
-            'trigger_by': trigger_by,
-            'close_on_trigger': close_on_trigger,
-            'order_link_id': order_link_id
-        }
-        return self._submit_request(method='POST', path=path, query=query, 
-            auth=True)
+    def place_conditional_order_bulk(self, orders: list, max_in_parallel=10):
+        """
+        Places multiple conditional orders in bulk using multithreading. For
+        more information on place_active_order, see
+        https://bybit-exchange.github.io/docs/inverse/#t-placecond.
 
-    def get_conditional_order(self, stop_order_id=None, order_link_id=None,
-        symbol=None, stop_order_status=None, order=None, page=None,
-        limit=None):
-        '''Get information about an open conditional order.
-        
-        Parameters
-        ------------------------
-        stop_order_id : str
-            This is the ID set by the exchange.
-        order_link_id : str
-            This is the ID set by the user.
-        symbol : str
-            The symbol of the market as a string, e.g. 'BTCUSD'. Used to
-            filter your results.
-        stop_order_status : str
-            Filter results by the status of the conditional order.
-        order : int
-            Used to sort orders by the creation date, in epoch time 
-            (seconds).
-        page : int
-            The number of pages of data to retrieve.
-        limit : int
-            The total number of orders to retrieve.
+        :param list orders: A list of orders and their parameters.
+        :param max_in_parallel: The number of requests to be sent in parallel.
+            Note that you are limited to 50 requests per second.
+        :returns: Future request result dictionaries as a list.
+        """
 
-        '''
+        with ThreadPoolExecutor(max_workers=max_in_parallel) as executor:
+            executions = [
+                executor.submit(
+                    self.place_conditional_order,
+                    **order
+                ) for order in orders
+            ]
+        executor.shutdown()
+        return [execution.result() for execution in executions]
 
-        path = self.endpoint + '/open-api/stop-order/list'
-        query = {
-            'stop_order_id': stop_order_id,
-            'order_link_id': order_link_id,
-            'symbol': symbol,
-            'stop_order_status': stop_order_status,
-            'order': order,
-            'page': page,
-            'limit': limit
-        }
-        return self._submit_request(method='GET', path=path, query=query, 
-            auth=True)
+    def get_conditional_order(self, **kwargs):
+        """
+        Gets a conditional order. For more information, see
+        https://bybit-exchange.github.io/docs/inverse/#t-getcond.
 
-    def cancel_conditional_order(self, symbol, stop_order_id=None,
-        order_link_id=None):
-        '''Cancels an open conditional order.
-        
-        Parameters
-        ------------------------
-        symbol : str
-            Required parameter. The symbol of the market as a string, 
-            e.g. 'BTCUSD'.
-        stop_order_id : str
-            Required parameter ONLY if order_link_id is not provided.
-            This is the ID set by the exchange.
-        order_link_id : str
-            Required parameter ONLY if order_id is not provided.
-            This is the ID set by the user.
+        :param kwargs: See
+            https://bybit-exchange.github.io/docs/inverse/#t-getcond.
+        :returns: Request results as dictionary.
+        """
 
-        '''
+        return self._submit_request(
+            method='GET',
+            path=self.endpoint + '/open-api/stop-order/list',
+            query=kwargs,
+            auth=True
+        )
 
-        path = self.endpoint + '/open-api/stop-order/cancel'
-        query = {
-            'symbol': symbol,
-            'stop_order_id': stop_order_id,
-            'order_link_id': order_link_id
-        }
-        return self._submit_request(method='POST', path=path, query=query,
-            auth=True)
+    def cancel_conditional_order(self, **kwargs):
+        """
+        Cancels a conditional order. For more information, see
+        https://bybit-exchange.github.io/docs/inverse/#t-cancelcond.
 
-    def cancel_all_conditional_orders(self, symbol):
-        '''Cancels all open conditional orders for a given symbol.
-        
-        Parameters
-        ------------------------
-        symbol : str
-            Required parameter. The symbol of the market as a string, 
-            e.g. 'BTCUSD'.
+        :param kwargs: See
+            https://bybit-exchange.github.io/docs/inverse/#t-cancelcond.
+        :returns: Request results as dictionary.
+        """
 
-        '''
+        return self._submit_request(
+            method='POST',
+            path=self.endpoint + '/open-api/stop-order/cancel',
+            query=kwargs,
+            auth=True
+        )
 
-        path = self.endpoint + '/v2/private/stop-order/cancelAll'
-        query = {
-            'symbol': symbol
-        }
-        return self._submit_request(method='POST', path=path, query=query,
-            auth=True)
+    def cancel_conditional_order_bulk(self, orders: list, max_in_parallel=10):
+        """
+        Cancels multiple conditional orders in bulk using multithreading. For
+        more information on cancel_active_order, see
+        https://bybit-exchange.github.io/docs/inverse/#t-cancelcond.
 
-    def replace_conditional_order(self, stop_order_id, order_id, symbol, 
-        p_r_qty=None, p_r_price=None, p_r_trigger_price=None):
-        '''Replaces or amends an open order.
-        
-        Parameters
-        ------------------------
-        stop_order_id : str
-            Required parameter. This is the ID set by the exchange.
-        symbol : str
-            Required parameter. The symbol of the market as a string, 
-            e.g. 'BTCUSD'.
-        p_r_qty : int
-            Used to change the quantity of your current order.
-        p_r_price : float
-            Used to change the price at which the current order is set.
-            Must be rounded to the nearest half (0.5).
-        p_r_trigger_price : float
-            Used to change the price at which the stop order is triggered.
-            Must be rounded to the nearest half (0.5).
+        :param list orders: A list of orders and their parameters.
+        :param max_in_parallel: The number of requests to be sent in parallel.
+            Note that you are limited to 50 requests per second.
+        :returns: Future request result dictionaries as a list.
+        """
 
-        '''
+        with ThreadPoolExecutor(max_workers=max_in_parallel) as executor:
+            executions = [
+                executor.submit(
+                    self.cancel_conditional_order,
+                    **order
+                ) for order in orders
+            ]
+        executor.shutdown()
+        return [execution.result() for execution in executions]
 
-        path = self.endpoint + '/open-api/stop-order/replace'
-        query = {
-            'stop_order_id': stop_order_id,
-            'order_id': order_id,
-            'symbol': symbol,
-            'p_r_qty': p_r_qty,
-            'p_r_price': p_r_price,
-            'p_r_trigger_price': p_r_trigger_price
-        }
-        return self._submit_request(method='POST', path=path, query=query,
-            auth=True)
+    def cancel_all_conditional_orders(self, **kwargs):
+        """
+        Cancel all conditional orders that are unfilled or partially filled.
+        Fully filled orders cannot be cancelled.
 
-    def query_conditional_order(self, symbol, stop_order_id=None, 
-        order_link_id=None):
-        '''Search for a specific conditional order.
-        
-        Parameters
-        ------------------------
-        symbol : str
-            Required parameter. The symbol of the market as a string, 
-            e.g. 'BTCUSD'.
-        stop_order_id : str
-            Required parameter ONLY if order_link_id is not provided.
-            This is the ID set by the exchange.
-        order_link_id : str
-            Required parameter ONLY if order_id is not provided.
-            This is the ID set by the user.
+        :param kwargs: See
+            https://bybit-exchange.github.io/docs/inverse/#t-cancelallcond.
+        :returns: Request results as dictionary.
+        """
 
-        '''
+        return self._submit_request(
+            method='POST',
+            path=self.endpoint + '/v2/private/stop-order/cancelAll',
+            query=kwargs,
+            auth=True
+        )
 
-        path = self.endpoint + '/v2/private/stop-order'
-        query = {
-            'symbol': symbol,
-            'stop_order_id': stop_order_id,
-            'order_link_id': order_link_id
-        }
-        return self._submit_request(method='GET', path=path, query=query,
-            auth=True)
+    def replace_conditional_order(self, **kwargs):
+        """
+        Replace conditional order can modify/amend your conditional orders.
 
-    '''
-    Leverage
-    '''
+        :param kwargs: See
+            https://bybit-exchange.github.io/docs/inverse/#t-replacecond.
+        :returns: Request results as dictionary.
+        """
 
-    def user_leverage(self):
-        '''Fetches the user's leverage.
-        
-        There are no parameters for this method.
+        return self._submit_request(
+            method='POST',
+            path=self.endpoint + '/open-api/stop-order/replace',
+            query=kwargs,
+            auth=True
+        )
 
-        '''
+    def replace_conditional_order_bulk(self, orders: list, max_in_parallel=10):
+        """
+        Replaces multiple conditional orders in bulk using multithreading. For
+        more information on replace_active_order, see
+        https://bybit-exchange.github.io/docs/inverse/#t-replacecond.
 
-        path = self.endpoint + '/user/leverage'
-        return self._submit_request(method='GET', path=path, query={}, 
-            auth=True)
+        :param list orders: A list of orders and their parameters.
+        :param max_in_parallel: The number of requests to be sent in parallel.
+            Note that you are limited to 50 requests per second.
+        :returns: Future request result dictionaries as a list.
+        """
 
-    def change_user_leverage(self, symbol, leverage):
-        '''Sets the user's leverage.
-        
-        Parameters
-        ------------------------
-        symbol : str
-            Required parameter. The symbol of the market as a string, 
-            e.g. 'BTCUSD'.
-        leverage : float
-            Required parameter. The desired leverage. Set to 0 for cross
-            leverage.
+        with ThreadPoolExecutor(max_workers=max_in_parallel) as executor:
+            executions = [
+                executor.submit(
+                    self.replace_conditional_order,
+                    **order
+                ) for order in orders
+            ]
+        executor.shutdown()
+        return [execution.result() for execution in executions]
 
-        '''
+    def query_conditional_order(self, **kwargs):
+        """
+        Query real-time conditional order information.
 
-        path = self.endpoint + '/user/leverage/save'
-        query = {
-            'symbol': symbol,
-            'leverage': leverage
-        }
-        return self._submit_request(method='POST', path=path, query=query,
-            auth=True)
+        :param kwargs: See
+            https://bybit-exchange.github.io/docs/inverse/#t-querycond.
+        :returns: Request results as dictionary.
+        """
 
-    '''
-    Position
-    '''
+        return self._submit_request(
+            method='GET',
+            path=self.endpoint + '/v2/private/stop-order',
+            query=kwargs,
+            auth=True
+        )
 
-    def my_position(self, symbol):
-        '''Fetches the user's position.
-        
-        Parameters
-        ------------------------
-        symbol : str
-            Required parameter. The symbol of the market as a string, 
-            e.g. 'BTCUSD'.
+    def my_position(self, **kwargs):
+        """
+        Get my position list.
 
-        '''
+        :param kwargs: See
+            https://bybit-exchange.github.io/docs/inverse/#t-myposition.
+        :returns: Request results as dictionary.
+        """
 
-        path = self.endpoint + '/v2/private/position/list'
-        query = {
-            'symbol': symbol
-        }
-        return self._submit_request(method='GET', path=path, query=query,
-            auth=True)
+        return self._submit_request(
+            method='GET',
+            path=self.endpoint + '/v2/private/position/list',
+            query=kwargs,
+            auth=True
+        )
 
-    def change_margin(self, symbol, margin):
-        '''Changes the margin of the current position.
-        
-        Parameters
-        ------------------------
-        symbol : str
-            Required parameter. The symbol of the market as a string, 
-            e.g. 'BTCUSD'.
-        margin : str
-            Required parameter. Desired margin. 
+    def change_margin(self, **kwargs):
+        """
+        Update margin.
 
-        '''
+        :param kwargs: See
+            https://bybit-exchange.github.io/docs/inverse/#t-changemargin.
+        :returns: Request results as dictionary.
+        """
 
-        path = self.endpoint + '/position/change-position-margin'
-        query = {
-            'symbol': symbol,
-            'margin': margin
-        }
-        return self._submit_request(method='POST', path=path, query=query,
-            auth=True)
+        return self._submit_request(
+            method='POST',
+            path=self.endpoint + '/position/change-position-margin',
+            query=kwargs,
+            auth=True
+        )
 
-    def set_trading_stop(self, symbol, take_profit=None, stop_loss=None,
-        trailing_stop=None, new_trailing_active=None):
-        '''Sets conditions for the open position..
-        
-        Parameters
-        ------------------------
-        symbol : str
-            Required parameter. The symbol of the market as a string, 
-            e.g. 'BTCUSD'.
-        take_profit : float
-            The price at which to set an optional take profit for the 
-            current position. Must be rounded to the nearest half (0.5).
-            Setting a 0 will cancel the position's take profit.
-        stop_loss : float
-            The price at which to set an optional stop loss for the 
-            current position. Must be rounded to the nearest half (0.5).
-            Setting a 0 will cancel the position's stop loss.
-        trailing_stop : float
-            The price at which to set an optional trailing stop for the
-            current position. Must be rounded to the nearest half (0.5).
-            Setting a 0 will cancel the position's trailing stop.
-        new_trailing_active : float
-            The trigger price of the trailing stop, if set. Must be rounded 
-            to the nearest half (0.5).
+    def set_trading_stop(self, **kwargs):
+        """
+        Set take profit, stop loss, and trailing stop for your open position.
 
-        '''
+        :param kwargs: See
+            https://bybit-exchange.github.io/docs/inverse/#t-tradingstop.
+        :returns: Request results as dictionary.
+        """
 
-        path = self.endpoint + '/open-api/position/trading-stop'
-        query = {
-            'symbol': symbol,
-            'take_profit': take_profit,
-            'stop_loss': stop_loss,
-            'trailing_stop': trailing_stop,
-            'new_trailing_active': new_trailing_active
-        }
-        return self._submit_request(method='POST', path=path, query=query,
-            auth=True)
+        return self._submit_request(
+            method='POST',
+            path=self.endpoint + '/open-api/position/trading-stop',
+            query=kwargs,
+            auth=True
+        )
 
-    '''
-    Risk Limit
-    '''
+    def user_leverage(self, **kwargs):
+        """
+        Get user leverage.
+
+        :param kwargs: See
+            https://bybit-exchange.github.io/docs/inverse/#t-getleverage.
+        :returns: Request results as dictionary.
+        """
+
+        return self._submit_request(
+            method='GET',
+            path=self.endpoint + '/user/leverage',
+            query=kwargs,
+            auth=True
+        )
+
+    def change_user_leverage(self, **kwargs):
+        """
+        Change user leverage.
+
+        :param kwargs: See
+            https://bybit-exchange.github.io/docs/inverse/#t-changeleverage.
+        :returns: Request results as dictionary.
+        """
+
+        return self._submit_request(
+            method='POST',
+            path=self.endpoint + '/user/leverage/save',
+            query=kwargs,
+            auth=True
+        )
+
+    def user_trade_records(self, **kwargs):
+        """
+        Get user's trading records. The results are ordered in ascending order
+        (the first item is the oldest).
+
+        :param kwargs: See
+            https://bybit-exchange.github.io/docs/inverse/#t-usertraderecords.
+        :returns: Request results as dictionary.
+        """
+
+        return self._submit_request(
+            method='GET',
+            path=self.endpoint + '/v2/private/execution/list',
+            query=kwargs,
+            auth=True
+        )
+
+    def closed_profit_and_loss(self, **kwargs):
+        """
+        Get user's closed profit and loss records. The results are ordered in
+        descending order (the first item is the latest).
+
+        :param kwargs: See
+            https://bybit-exchange.github.io/docs/inverse/#t-closedprofitandloss.
+        :returns: Request results as dictionary.
+        """
+
+        return self._submit_request(
+            method='GET',
+            path=self.endpoint + '/v2/private/trade/closed-pnl/list',
+            query=kwargs,
+            auth=True
+        )
 
     def get_risk_limit(self):
-        '''Fetches the user's risk limit.
-        
-        There are no parameters for this method.
+        """
+        Get risk limit.
 
-        '''
+        :returns: Request results as dictionary.
+        """
 
-        path = self.endpoint + '/open-api/wallet/risk-limit/list'
-        return self._submit_request(method='GET', path=path, query={}, 
+        return self._submit_request(
+            method='GET',
+            path=self.endpoint + '/open-api/wallet/risk-limit/list',
+            auth=True
+        )
+
+    def set_risk_limit(self, **kwargs):
+        """
+        Set risk limit.
+
+        :param kwargs: See
+            https://bybit-exchange.github.io/docs/inverse/#t-setrisklimit.
+        :returns: Request results as dictionary.
+        """
+
+        return self._submit_request(
+            method='POST',
+            path=self.endpoint + '/open-api/wallet/risk-limit',
+            query=kwargs,
+            auth=True
+        )
+
+    def get_last_funding_rate(self, **kwargs):
+        """
+        The funding rate is generated every 8 hours at 00:00 UTC, 08:00 UTC and
+        16:00 UTC. For example, if a request is sent at 12:00 UTC, the funding
+        rate generated earlier that day at 08:00 UTC will be sent.
+
+        :param kwargs: See
+            https://bybit-exchange.github.io/docs/inverse/#t-fundingrate.
+        :returns: Request results as dictionary.
+        """
+
+        return self._submit_request(
+            method='GET',
+            path=self.endpoint + '/open-api/funding/prev-funding-rate',
+            query=kwargs,
+            auth=True
+        )
+
+    def my_last_funding_fee(self, **kwargs):
+        """
+        Funding settlement occurs every 8 hours at 00:00 UTC, 08:00 UTC and
+        16:00 UTC. The current interval's fund fee settlement is based on the
+        previous interval's fund rate. For example, at 16:00, the settlement is
+        based on the fund rate generated at 8:00. The fund rate generated at
+        16:00 will be used at 0:00 the next day.
+
+        :param kwargs: See
+            https://bybit-exchange.github.io/docs/inverse/#t-mylastfundingfee.
+        :returns: Request results as dictionary.
+        """
+
+        return self._submit_request(
+            method='GET',
+            path=self.endpoint + '/open-api/funding/prev-funding',
+            query=kwargs,
+            auth=True
+        )
+
+    def predicted_funding_rate(self, **kwargs):
+        """
+        Get predicted funding rate and my funding fee.
+
+        :param kwargs: See
+            https://bybit-exchange.github.io/docs/inverse/#t-predictedfunding.
+        :returns: Request results as dictionary.
+        """
+
+        return self._submit_request(
+            method='GET',
+            path=self.endpoint + '/open-api/funding/predicted-funding',
+            query=kwargs,
             auth=True)
-
-    def set_risk_limit(self, symbol, risk_id):
-        '''Sets the user's risk limit.
-        
-        Parameters
-        ------------------------
-        symbol : str
-            Required parameter. The symbol of the market as a string, 
-            e.g. 'BTCUSD'.
-        risk_id : str
-            Required parameter. The risk identifier. Can be found with
-            get_risk_limit().
-
-        '''
-
-        path = self.endpoint + '/open-api/wallet/risk-limit'
-        query = {
-            'symbol': symbol,
-            'risk_id': risk_id
-        }
-        return self._submit_request(method='POST', path=path, query=query,
-            auth=True)
-
-    '''
-    Funding
-    '''
-
-    def get_last_funding_rate(self, symbol):
-        '''Fetches the last funding rate for the particular symbol.
-        
-        Parameters
-        ------------------------
-        symbol : str
-            Required parameter. The symbol of the market as a string, 
-            e.g. 'BTCUSD'.
-
-        '''
-
-        path = self.endpoint + '/open-api/funding/prev-funding-rate'
-        query = {
-            'symbol': symbol
-        }
-        return self._submit_request(method='GET', path=path, query=query,
-            auth=True)
-
-    def my_last_funding_fee(self, symbol):
-        '''Fetches the user's last funding fee for the particular symbol.
-        
-        Parameters
-        ------------------------
-        symbol : str
-            Required parameter. The symbol of the market as a string, 
-            e.g. 'BTCUSD'.
-
-        '''
-
-        path = self.endpoint + '/open-api/funding/prev-funding'
-        query = {
-            'symbol': symbol
-        }
-        return self._submit_request(method='GET', path=path, query=query,
-            auth=True)
-
-    def predicted_funding_rate(self, symbol):
-        '''Fetches the next predicted funding rate for the particular 
-        symbol.
-        
-        Parameters
-        ------------------------
-        symbol : str
-            Required parameter. The symbol of the market as a string, 
-            e.g. 'BTCUSD'.
-
-        '''
-
-        path = self.endpoint + '/open-api/funding/predicted-funding'
-        query = {
-            'symbol': symbol
-        }
-        return self._submit_request(method='GET', path=path, query=query,
-            auth=True)
-
-    '''
-    API Key Info
-    '''
 
     def api_key_info(self):
-        '''Fetches information about the user's current API key.
-        
-        There are no parameters for this method.
+        """
+        Get user's API key info.
 
-        '''
+        :returns: Request results as dictionary.
+        """
 
-        path = self.endpoint + '/open-api/api-key'
-        return self._submit_request(method='GET', path=path, query={}, 
+        return self._submit_request(
+            method='GET',
+            path=self.endpoint + '/open-api/api-key',
+            auth=True
+        )
+
+    def lcp_info(self, **kwargs):
+        """
+        Get user's LCP (data refreshes once an hour). Only supports inverse
+        perpetual at present. See
+        https://bybit-exchange.github.io/docs/inverse/#t-liquidity to learn
+        more.
+
+        :param kwargs: See
+            https://bybit-exchange.github.io/docs/inverse/#t-lcp.
+        :returns: Request results as dictionary.
+        """
+
+        return self._submit_request(
+            method='GET',
+            path=self.endpoint + '/v2/private/account/lcp',
+            query=kwargs,
+            auth=True
+        )
+
+    def get_wallet_balance(self, **kwargs):
+        """
+        Get wallet balance info.
+
+        :param kwargs: See
+            https://bybit-exchange.github.io/docs/inverse/#t-balance.
+        :returns: Request results as dictionary.
+        """
+
+        return self._submit_request(
+            method='GET',
+            path=self.endpoint + '/v2/private/wallet/balance',
+            query=kwargs,
+            auth=True
+        )
+
+    def wallet_fund_records(self, **kwargs):
+        """
+        Get wallet fund records. This endpoint also shows exchanges from the
+        Asset Exchange, where the types for the exchange are
+        ExchangeOrderWithdraw and ExchangeOrderDeposit.
+
+        :param kwargs: See
+            https://bybit-exchange.github.io/docs/inverse/#t-walletrecords.
+        :returns: Request results as dictionary.
+        """
+
+        return self._submit_request(
+            method='GET',
+            path=self.endpoint + '/open-api/wallet/fund/records',
+            query=kwargs,
             auth=True)
 
-    '''
-    Wallet Data Endpoints
-    See https://bybit-exchange.github.io/docs/inverse/#t-wallet
-    for more information.
+    def withdraw_records(self, **kwargs):
+        """
+        Get withdrawal records.
 
-    /v2/private/wallet/balance
-    /open-api/wallet/fund/records
-    /open-api/wallet/withdraw/list
-    /v2/private/execution/list
-    '''
+        :param kwargs: See
+            https://bybit-exchange.github.io/docs/inverse/#t-withdrawrecords.
+        :returns: Request results as dictionary.
+        """
 
-    def get_wallet_balance(self, coin):
-        '''Fetches the user's wallet balance.
-        
-        Parameters
-        ------------------------
-        coin : str
-            Required parameter. The cryptocurrency ticker as a string, 
-            e.g. 'BTC'.
-
-        '''
-
-        path = self.endpoint + '/v2/private/wallet/balance'
-        query = {
-            'coin': coin
-        }
-        return self._submit_request(method='GET', path=path, query=query,
+        return self._submit_request(
+            method='GET',
+            path=self.endpoint + '/open-api/wallet/withdraw/list',
+            query=kwargs,
             auth=True)
 
-    def wallet_fund_records(self, start_date=None, end_date=None,
-        currency=None, coin=None, wallet_fund_type=None, page=None,
-        limit=None):
-        '''Fetches the user's wallet records.
-        
-        Parameters
-        ------------------------
-        start_date : int
-            The start date of your record search, in epoch time (seconds).
-        end_date : int
-            The end date of your record search, in epoch time (seconds).
-        currency : str
-            A specific coin/currency to search for.
-        coin : str
-            An alias for currrency.
-        wallet_fund_type : str
-            The type of events to search for. Options are 'Deposit', 
-            'Withdraw', 'RealisedPNL', 'Commission', 'Refund', 'Prize',
-            'ExchangeOrderWithdraw', and 'ExchangeOrderDeposit'.
-        page : int
-            The number of pages of data to retrieve.
-        limit : int
-            The total number of orders to retrieve.
+    def asset_exchange_records(self, **kwargs):
+        """
+        Get asset exchange records.
 
-        '''
+        :param kwargs: See
+            https://bybit-exchange.github.io/docs/inverse/#t-assetexchangerecords.
+        :returns: Request results as dictionary.
+        """
 
-        path = self.endpoint + '/open-api/wallet/fund/records'
-        query = {
-            'start_date': start_date,
-            'end_date': end_date,
-            'currency': currency,
-            'coin': coin,
-            'wallet_fund_type': wallet_fund_type,
-            'page': page,
-            'limit': limit
-        }
-        return self._submit_request(method='GET', path=path, query=query,
-            auth=True)
-
-    def withdraw_records(self, start_date=None, end_date=None, coin=None,
-        status=None, page=None, limit=None):
-        '''Fetches the user's withdrawal records.
-        
-        Parameters
-        ------------------------
-        start_date : int
-            The start date of your record search, in epoch time (seconds).
-        end_date : int
-            The end date of your record search, in epoch time (seconds).
-        coin : str
-            A specific coin/currency to search for.
-        status : str
-            Filter results by the status of the withdrawal.
-        page : int
-            The number of pages of data to retrieve.
-        limit : int
-            The total number of orders to retrieve.
-
-        '''
-
-        path = self.endpoint + '/open-api/wallet/withdraw/list'
-        query = {
-            'start_date': start_date,
-            'end_date': end_date,
-            'coin': coin,
-            'status': status,
-            'page': page,
-            'limit': limit
-        }
-        return self._submit_request(method='GET', path=path, query=query,
-            auth=True)
-
-    def user_trade_records(self, symbol, order_id=None, start_time=None, 
-        page=None, limit=None):
-        '''Fetches the user's trade records.
-        
-        Parameters
-        ------------------------
-        symbol : str
-            Required parameter. The symbol of the market as a string, 
-            e.g. 'BTCUSD'.
-        order_id : str
-            This is the ID set by the exchange.
-        start_time : int
-            The start time of your record search, in epoch time (seconds).
-        page : int
-            The number of pages of data to retrieve.
-        limit : int
-            The total number of orders to retrieve.
-
-        '''
-
-        path = self.endpoint + '/v2/private/execution/list'
-        query = {
-            'order_id': order_id,
-            'symbol': symbol,
-            'start_time': start_time,
-            'page': page,
-            'limit': limit
-        }
-        return self._submit_request(method='GET', path=path, query=query,
-            auth=True)
-
-    '''
-    API Data Endpoints
-    See https://bybit-exchange.github.io/docs/inverse/#t-wallet
-    for more information.
-
-    /v2/public/time
-    /v2/public/announcement
-    '''
+        return self._submit_request(
+            method='GET',
+            path=self.endpoint + '/v2/private/exchange-order/list',
+            query=kwargs,
+            auth=True
+        )
 
     def server_time(self):
-        '''Fetches the exchange server time.
-        
-        There are no parameters for this method.
+        """
+        Get Bybit server time.
 
-        '''
+        :returns: Request results as dictionary.
+        """
 
-        path = self.endpoint + '/v2/public/time'
-        return self._submit_request(method='GET', path=path)
+        return self._submit_request(
+            method='GET',
+            path=self.endpoint + '/v2/public/time'
+        )
 
     def announcement(self):
-        '''Fetches the exchange's recent announcements.
-        
-        There are no parameters for this method.
+        """
+        Get Bybit OpenAPI announcements in the last 30 days by reverse order.
 
-        '''
+        :returns: Request results as dictionary.
+        """
 
-        path = self.endpoint + '/v2/public/announcement'
-        return self._submit_request(method='GET', path=path)
+        return self._submit_request(
+            method='GET',
+            path=self.endpoint + '/v2/public/announcement'
+        )
 
     '''
     Additional Methods
@@ -1088,33 +917,31 @@ class HTTP:
     '''
 
     def close_position(self, symbol):
-        '''Closes your open position.
+        """
+        Closes your open position. Makes two requests (position, order).
 
         Parameters
         ------------------------
         symbol : str
-            Required parameter. The symbol of the market as a string, 
+            Required parameter. The symbol of the market as a string,
             e.g. 'BTCUSD'.
 
-        '''
+        """
 
         # First we fetch the user's position.
         r = self._submit_request(
-            method='GET', 
-            path=self.endpoint + '/v2/private/position/list', 
-            query={'symbol' : symbol},
+            method='GET',
+            path=self.endpoint + '/v2/private/position/list',
+            query={'symbol': symbol},
             auth=True
         )
 
         # Next we detect the position size and side.
         try:
             position = r['result']['size']
+            side = 'Buy' if r['result']['side'] == 'Sell' else 'Sell'
             if position == 0:
                 return self.logger.error('No position detected.')
-            if r['result']['side'] == 'Buy':
-                side = 'Sell'
-            else:
-                side = 'Buy'
 
         # If there is no returned position, we want to handle that.
         except IndexError:
@@ -1125,13 +952,13 @@ class HTTP:
             close_path = self.endpoint + '/private/linear/order/create'
         else:
             close_path = self.endpoint + '/v2/private/order/create'
-        
+
         # Submit a market order against your position for the same qty.
         return self._submit_request(
-            method='POST', 
-            path=close_path, 
+            method='POST',
+            path=close_path,
             query={
-                'symbol' : symbol,
+                'symbol': symbol,
                 'order_type': 'Market',
                 'side': side,
                 'qty': position,
@@ -1146,55 +973,64 @@ class HTTP:
     https://bybit-exchange.github.io/docs/inverse/#t-authentication.
     '''
 
-    def _auth(self, method, params, api_key, api_secret):
-        '''Generates authentication signature per Bybit API specifications.
+    @staticmethod
+    def _auth(method, params, api_key, api_secret):
+        """
+        Generates authentication signature per Bybit API specifications.
 
         Notes
         -------------------
         Since the POST method requires a JSONified dict, we need to ensure
         the signature uses lowercase booleans instead of Python's
         capitalized booleans. This is done in the bug fix below.
-        
-        '''
+
+        """
 
         if api_key is None or api_secret is None:
             raise PermissionError('Authenticated endpoints require keys.')
 
         # Append required parameters.
         params['api_key'] = api_key
-        params['timestamp'] = int(time.time() * 10**3)
+        params['timestamp'] = int(time.time() * 10 ** 3)
 
         # Sort dictionary alphabetically to create querystring.
         _val = '&'.join(
             [str(k) + '=' + str(v) for k, v in sorted(params.items()) if
-                (k != 'sign') and (v is not None)]
-            )
+             (k != 'sign') and (v is not None)]
+        )
 
         # Bug fix. Replaces all capitalized booleans with lowercase.
         if method == 'POST':
             _val = _val.replace('True', 'true').replace('False', 'false')
 
-        # Return signature.    
-        return str(hmac.new(bytes(api_secret, 'utf-8'), 
-            bytes(_val, 'utf-8'), digestmod='sha256').hexdigest())
+        # Return signature.
+        return str(hmac.new(
+            bytes(api_secret, 'utf-8'),
+            bytes(_val, 'utf-8'), digestmod='sha256'
+        ).hexdigest())
 
     def _submit_request(self, method=None, path=None, query=None, auth=False):
-        '''Submits the request to the API.
+        """
+        Submits the request to the API.
 
         Notes
         -------------------
         We use the params argument for the GET method, and data argument for
-        the POST method. Dicts passed to the data argument must be 
+        the POST method. Dicts passed to the data argument must be
         JSONified prior to submitting request.
-        
-        '''
+
+        """
 
         # Authenticate if we are using a private endpoint.
         if auth:
 
             # Prepare signature.
-            signature = self._auth(method=method, params=query, 
-                api_key=self.api_key, api_secret=self.api_secret)
+            signature = self._auth(
+                method=method,
+                params=query,
+                api_key=self.api_key,
+                api_secret=self.api_secret
+            )
 
             # Sort the dictionary alphabetically.
             query = dict(sorted(query.items(), key=lambda x: x))
@@ -1204,8 +1040,8 @@ class HTTP:
 
         # Define parameters and log the request.
         if query is not None:
-            req_params = {k: v for k, v in query.items() if 
-                v is not None}
+            req_params = {k: v for k, v in query.items() if
+                          v is not None}
         else:
             req_params = {}
         self.logger.info(f'Request -> {method} {path}: {req_params}')
@@ -1226,9 +1062,11 @@ class HTTP:
         # Return dict.
         return s.json()
 
+
 class WebSocket:
-    '''Connector for Bybit's WebSocket API.
-    
+    """
+    Connector for Bybit's WebSocket API.
+
     Parameters
     ------------------------
     endpoint : str
@@ -1244,11 +1082,11 @@ class WebSocket:
         for more information. Defaults to an empty list, which will
         raise an error.
     logging_level : int
-        The logging level of the built-in logger. Defaults to 
-        logging.INFO. Options are CRITICAL (50), ERROR (40), 
+        The logging level of the built-in logger. Defaults to
+        logging.INFO. Options are CRITICAL (50), ERROR (40),
         WARNING (30), INFO (20), DEBUG (10), or NOTSET (0).
     max_data_length : int
-        The maximum number of rows for the stored dataset. A smaller 
+        The maximum number of rows for the stored dataset. A smaller
         number will prevent performance or memory issues.
     ping_interval : int
         The number of seconds between each automated ping.
@@ -1257,7 +1095,7 @@ class WebSocket:
         raised.
 
     Notes
-    ------------------------ 
+    ------------------------
     Inverse Perpetual endpoints:
     wss://stream-testnet.bybit.com/realtime
     wss://stream.bybit.com/realtime
@@ -1267,44 +1105,50 @@ class WebSocket:
     wss://stream-testnet.bybit.com/realtime_private
     wss://stream.bybit.com/realtime_public
     wss://stream.bybit.com/realtime_private
+    """
 
-    '''
-    
-    def __init__(self, endpoint, api_key=None, api_secret=None, 
-        subscriptions=[], logging_level=logging.INFO, max_data_length=200,
-        ping_interval=30, ping_timeout=10):
-        '''Initializes the WebSocket class.'''
+    def __init__(self, endpoint, api_key=None, api_secret=None,
+                 subscriptions=None, logging_level=logging.INFO,
+                 max_data_length=200, ping_interval=30, ping_timeout=10):
+        """Initializes the WebSocket class."""
 
-        if subscriptions == []:
+        if not subscriptions:
             raise Exception('Subscription list cannot be empty!')
 
         # Require symbol on 'trade' topic.
         if 'trade' in subscriptions:
             raise Exception('\'trade\' requires a ticker, e.g. '
-                '\'trade.BTCUSD\'.')
+                            '\'trade.BTCUSD\'.')
 
         # Require currency on 'insurance' topic.
         if 'insurance' in subscriptions:
             raise Exception('\'insurance\' requires a currency, e.g. '
-                '\'insurance.BTC\'.')
+                            '\'insurance.BTC\'.')
 
         # Require timeframe and ticker on 'klineV2' topic.
         if 'klineV2' in subscriptions:
             raise Exception('\'klineV2\' requires a timeframe and ticker, e.g.'
-                ' \'klineV2.5.BTCUSD\'.')
+                            ' \'klineV2.5.BTCUSD\'.')
 
         # Setup logger.
-        logging.basicConfig(level=logging_level,
+        logging.basicConfig(
+            level=logging_level,
             format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-            datefmt='%Y-%m-%d %H:%M:%S')
+            datefmt='%Y-%m-%d %H:%M:%S'
+        )
         self.logger = logging.getLogger(__name__)
         self.logger.info('Initializing WebSocket.')
 
         # Ensure authentication for private topics.
-        if any(i in subscriptions for i in ['position', 'execution',
-            'order', 'stop_order', 'wallet']) and api_key == None:
+        if any(i in subscriptions for i in [
+            'position',
+            'execution',
+            'order',
+            'stop_order',
+            'wallet'
+        ]) and api_key is None:
             raise PermissionError('You must be authorized to use '
-                'private topics!')
+                                  'private topics!')
 
         # Set endpoint.
         self.endpoint = endpoint
@@ -1330,13 +1174,13 @@ class WebSocket:
         self._connect(self.endpoint)
 
     def fetch(self, topic):
-        '''Fetches data from the subscribed topic.
-        
+        """Fetches data from the subscribed topic.
+
         Parameters
         ------------------------
         topic : str
             Required parameter. The subscribed topic to poll.
-        '''
+        """
 
         # If topic isn't a string.
         if not isinstance(topic, str):
@@ -1349,8 +1193,12 @@ class WebSocket:
             return
 
         # Pop all trade, execution, or order data on each poll.
-        if topic.startswith(('trade', 'execution', 'order', \
-            'stop_order')) and not topic.startswith('orderBook'):
+        if topic.startswith((
+                'trade',
+                'execution',
+                'order',
+                'stop_order'
+        )) and not topic.startswith('orderBook'):
             data = self.data[topic].copy()
             self.data[topic] = []
             return data
@@ -1358,27 +1206,29 @@ class WebSocket:
             return self.data[topic]
 
     def ping(self):
-        '''Pings the remote server to test the connection. The status of the
-        connection can be monitored using ws.ping().'''
+        """Pings the remote server to test the connection. The status of the
+        connection can be monitored using ws.ping()."""
 
         self.ws.send(json.dumps({'op': 'ping'}))
 
     def exit(self):
-        '''Closes the websocket connection.'''
+        """Closes the websocket connection."""
 
         self.exited = True
         self.ws.close()
 
     def _auth(self):
-        '''Authorize websocket connection.'''
+        """Authorize websocket connection."""
 
         # Generate expires.
-        expires = str(int(time.time() * 10**3))
+        expires = str(int(time.time() * 10 ** 3))
 
         # Generate signature.
         _val = 'GET/realtime' + expires
-        signature = str(hmac.new(bytes(self.api_secret, 'utf-8'), 
-            bytes(_val, 'utf-8'), digestmod='sha256').hexdigest())
+        signature = str(hmac.new(
+            bytes(self.api_secret, 'utf-8'),
+            bytes(_val, 'utf-8'), digestmod='sha256'
+        ).hexdigest())
 
         # Authenticate with API.
         self.ws.send(
@@ -1389,15 +1239,19 @@ class WebSocket:
         )
 
     def _connect(self, url):
-        '''Connect to the websocket in a thread.'''
+        """Connect to the websocket in a thread."""
 
-        self.ws = websocket.WebSocketApp(url, 
-            on_message=self._on_message, on_close=self._on_close,
-            on_open=self._on_open, on_error=self._on_error)
+        self.ws = websocket.WebSocketApp(
+            url=url,
+            on_message=self._on_message,
+            on_close=self._on_close,
+            on_open=self._on_open,
+            on_error=self._on_error
+        )
 
         # Setup the thread running WebSocketApp.
         self.wst = threading.Thread(target=lambda: self.ws.run_forever(
-            ping_interval=self.ping_interval, 
+            ping_interval=self.ping_interval,
             ping_timeout=self.ping_timeout
         ))
 
@@ -1433,19 +1287,20 @@ class WebSocket:
             if topic not in self.data:
                 self.data[topic] = {}
 
-    def _find_index(self, source, target):
-        '''Find the index in source list of the targeted ID.'''
+    @staticmethod
+    def _find_index(source, target):
+        """Find the index in source list of the targeted ID."""
         return next(i for i, j in enumerate(source) if j['id'] == target['id'])
 
     def _on_message(self, message):
-        '''Parse a couple select messages. Similar structure to the
-        official WS connector. '''
-        
+        """Parse a couple select messages. Similar structure to the
+        official WS connector. """
+
         # Load dict of message.
         msg_json = json.loads(message)
 
         # If 'success' exists and is True.
-        if 'success' in msg_json and msg_json['success']:   
+        if 'success' in msg_json and msg_json['success']:
 
             # If 'request' exists.
             if 'request' in msg_json:
@@ -1462,16 +1317,16 @@ class WebSocket:
 
         # If 'success' exists but is False.
         elif 'success' in msg_json and not msg_json['success']:
-            
+
             response = msg_json['ret_msg']
             if 'unknown topic' in response:
                 self.logger.error('Couldn\'t subscribe to topic.'
-                    f' Error: {response}.')
+                                  f' Error: {response}.')
 
             # If we get unsuccesful auth, notify user.
             elif msg_json['request']['op'] == 'auth':
                 self.logger.info('Authorization failed. Please check your '
-                    'API keys and restart.')
+                                 'API keys and restart.')
 
         elif 'topic' in msg_json:
 
@@ -1488,13 +1343,11 @@ class WebSocket:
 
                     # Delete.
                     for entry in msg_json['data']['delete']:
-
                         idx = self._find_index(self.data[topic], entry)
                         self.data[topic].pop(idx)
 
                     # Update.
                     for entry in msg_json['data']['update']:
-
                         idx = self._find_index(self.data[topic], entry)
                         self.data[topic][idx] = entry
 
@@ -1504,8 +1357,8 @@ class WebSocket:
 
             # For incoming 'trade', 'execution', 'order' and 'stop_order'
             # data.
-            elif any(i in topic for i in ['trade', 'execution', 'order', 
-                'stop_order']):
+            elif any(i in topic for i in ['trade', 'execution', 'order',
+                                          'stop_order']):
 
                 # Keep appending or create new list if not already created.
                 try:
@@ -1544,18 +1397,18 @@ class WebSocket:
                 self.data[topic][msg_json['data'][0]['symbol']] = data
 
     def _on_error(self, error):
-        '''Exit on errors and raise exception.'''
+        """Exit on errors and raise exception."""
 
         if not self.exited:
             self.logger.info(f'WebSocket encountered error: {error}.')
             raise websocket.WebSocketException(error)
 
     def _on_open(self):
-        '''Log WS open.'''
+        """Log WS open."""
 
         self.logger.debug('WebSocket opened.')
 
     def _on_close(self):
-        '''Log WS close.'''
+        """Log WS close."""
 
         self.logger.info('WebSocket closed.')
