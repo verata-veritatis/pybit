@@ -1214,8 +1214,10 @@ class WebSocket:
     def exit(self):
         """Closes the websocket connection."""
 
-        self.exited = True
         self.ws.close()
+        while self.ws.sock.connected:
+            continue
+        self.exited = True
 
     def _auth(self):
         """Authorize websocket connection."""
@@ -1400,8 +1402,11 @@ class WebSocket:
         """Exit on errors and raise exception."""
 
         if not self.exited:
-            self.logger.info(f'WebSocket encountered error: {error}.')
-            raise websocket.WebSocketException(error)
+            self.logger.error(f'WebSocket encountered error: {error}.')
+            self.exit()
+
+        # Reconnect.
+        self._connect(self.endpoint)
 
     def _on_open(self):
         """Log WS open."""
