@@ -105,7 +105,7 @@ class HTTP:
         if referral_id:
             self.client.headers.update({'Referer': referral_id})
 
-    def exit(self):
+    def _exit(self):
         """Closes the request session."""
         self.client.close()
         self.logger.info('HTTP session closed.')
@@ -968,7 +968,8 @@ class HTTP:
             method='GET',
             path=self.endpoint + suffix,
             query=kwargs,
-            auth=True)
+            auth=True
+        )
 
     def api_key_info(self):
         """
@@ -1033,7 +1034,8 @@ class HTTP:
             method='GET',
             path=self.endpoint + '/open-api/wallet/fund/records',
             query=kwargs,
-            auth=True)
+            auth=True
+        )
 
     def withdraw_records(self, **kwargs):
         """
@@ -1048,7 +1050,8 @@ class HTTP:
             method='GET',
             path=self.endpoint + '/open-api/wallet/withdraw/list',
             query=kwargs,
-            auth=True)
+            auth=True
+        )
 
     def asset_exchange_records(self, **kwargs):
         """
@@ -1510,7 +1513,7 @@ class WebSocket:
 
                 # If we get successful subscription, notify user.
                 if msg_json['request']['op'] == 'subscribe':
-                    sub = msg_json['request']['args'][0]
+                    sub = msg_json['request']['args']
                     self.logger.info(f'Subscription to {sub} successful.')
 
         # If 'success' exists but is False.

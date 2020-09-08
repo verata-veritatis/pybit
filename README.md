@@ -29,7 +29,8 @@ from pybit import HTTP, WebSocket
 ```
 Create an HTTP session and connect via WebSocket:
 ```python
-session = HTTP(endpoint='https://api.bybit.com', 
+session = HTTP(
+    endpoint='https://api.bybit.com', 
     api_key='...', 
     api_secret='...'
 )
@@ -43,16 +44,21 @@ ws = WebSocket(
 Information can be sent to, or retrieved from, the Bybit APIs:
 ```python
 # Get orderbook.
-session.get_orderbook(symbol='BTCUSD')
-# Place three long orders.
-for i in [5000, 5500, 6000]:
-    session.place_active_order(
-        symbol='BTCUSD', 
-        order_type='Limit', 
-        side='Buy', 
-        qty=100, 
-        price=i
-    )
+session.orderbook(symbol='BTCUSD')
+
+# Create five long orders.
+orders = [{
+    'symbol': 'BTCUSD', 
+    'order_type': 'Limit', 
+    'side': 'Buy', 
+    'qty': 100, 
+    'price': i,
+    'time_in_force': 'GoodTillCancel'
+} for i in [5000, 5500, 6000, 6500, 7000]]
+
+# Submit the orders in bulk.
+session.place_active_order_bulk(orders)
+
 # Check on your order and position through WebSocket.
 ws.fetch('order')
 ws.fetch('position')

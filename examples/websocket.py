@@ -1,4 +1,4 @@
-'''
+"""
 To see which endpoints and topics are available, check the Bybit API 
 documentation: https://bybit-exchange.github.io/docs/inverse/#t-websocket
 
@@ -26,13 +26,13 @@ execution
 order
 stop_order
 wallet
-'''
+"""
 
 # Import the WebSocket object from pybit.
 from pybit import WebSocket
 
-'''
-We can also import the HTTP object at the same time using.
+"""
+We can also import the HTTP object at the same time using:
 
 from pybit import HTTP, WebSocket
 
@@ -42,18 +42,39 @@ object selectively.
 import pybit
 client = pybit.HTTP(...)
 ws = pybit.WebSocket(...)
-'''
+"""
 
 # Define your endpoint URL and subscriptions.
 endpoint = 'wss://stream.bybit.com/realtime'
-subs = ['orderBookL2_25.BTCUSD', 'instrument_info.100ms.BTCUSD', 
-    'instrument_info.100ms.ETHUSD']
+subs = [
+    'orderBookL2_25.BTCUSD',
+    'instrument_info.100ms.BTCUSD',
+    'instrument_info.100ms.ETHUSD'
+]
 
-# Connect!
-ws = WebSocket(endpoint, subscriptions=subs)
+# Connect without authentication!
+ws_unauth = WebSocket(endpoint, subscriptions=subs)
+
+# Connect with authentication!
+ws_auth = WebSocket(
+    endpoint,
+    subscriptions=['position'],
+    api_key='...',
+    api_secret='...'
+)
 
 # Let's fetch the orderbook for BTCUSD.
-ws.fetch('orderBookL2_25.BTCUSD')
+print(
+    ws_unauth.fetch('orderBookL2_25.BTCUSD')
+)
 
 # We can also create a dict containing multiple results.
-{i: ws.fetch(i) for i in subs}
+print(
+    {i: ws_unauth.fetch(i) for i in subs}
+)
+
+# Check on your position. Note that no position data is received until a
+# change in your position occurs (initially, there will be no data).
+print(
+    ws_auth.fetch('position')
+)

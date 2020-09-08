@@ -1,4 +1,4 @@
-'''
+"""
 To see which endpoints are available, you can read the API docs at
 https://bybit-exchange.github.io/docs/inverse/#t-introduction
 
@@ -64,27 +64,30 @@ Custom Methods:
 ------------------------
 close_position()
 
-'''
+"""
 
 # Import pybit and define the HTTP object.
 from pybit import HTTP
 
-'''
+"""
 You can create an authenticated or unauthenticated HTTP session. 
 You can skip authentication by not passing any value for api_key
 and api_secret.
-'''
+"""
 
 # Unauthenticated
 session_unauth = HTTP(endpoint='https://api.bybit.com')
 
 # Authenticated
-session_auth = HTTP(endpoint='https://api.bybit.com', api_key='...', 
-    api_secret='...')
+session_auth = HTTP(
+    endpoint='https://api.bybit.com',
+    api_key='...',
+    api_secret='...'
+)
 
 # Lets get market information about EOSUSD. Note that 'symbol' is
 # a required parameter as per the Bybit API documentation.
-session_unauth.get_tickers(symbol='EOSUSD')
+session_unauth.latest_information_for_symbol(symbol='EOSUSD')
 
 # We can fetch our wallet balance using an auth'd session.
 session_auth.get_wallet_balance(coin='BTC')

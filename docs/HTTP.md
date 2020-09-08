@@ -4,601 +4,525 @@ Available methods for the HTTP module of `pybit`.
 ## Public Endpoints
 
 ```python
-def get_orderbook(self, symbol):
-    '''Get orderbook data.
-    
-    Parameters
-    ------------------------
-    symbol : str
-        Required parameter. The symbol of the market as a string, 
-        e.g. 'BTCUSD'.
+def orderbook(self, **kwargs):
+    """
+    Get the orderbook.
 
-    '''
+    :param kwargs: See
+        https://bybit-exchange.github.io/docs/inverse/#t-orderbook.
+    :returns: Request results as dictionary.
+    """
 
-def get_klines(self, symbol, interval, from_time, limit=None):
-    '''Get kline data.
-    
-    Parameters
-    ------------------------
-    symbol : str
-        Required parameter. The symbol of the market as a string, 
-        e.g. 'BTCUSD'.
-    interval : str
-        Required parameter. The desired candle interval. Available
-        options are: 1, 3, 5, 15, 30, 60, 120, 240, 360, 720, 
-        D, M, W, Y.
-    from_time : int
-        Required parameter. The time from which to begin your lookup of
-        candles, in epoch time (seconds).
-    limit : int
-        The number of candles to fetch. Defaults to 500; maximum is
-        1000.
+def query_kline(self, **kwargs):
+    """
+    Get kline.
 
-    '''
+    :param kwargs: See
+        https://bybit-exchange.github.io/docs/inverse/#t-querykline.
+    :returns: Request results as dictionary.
+    """
 
-def get_tickers(self, symbol=None):
-    '''Get ticker data.
-    
-    Parameters
-    ------------------------
-    symbol : str
-        The symbol of the market as a string, e.g. 'BTCUSD'.
+def latest_information_for_symbol(self, **kwargs):
+    """
+    Get the latest information for symbol.
 
-    '''
+    :param kwargs: See
+        https://bybit-exchange.github.io/docs/inverse/#t-latestsymbolinfo.
+    :returns: Request results as dictionary.
+    """
 
-def get_trading_records(self, symbol, from_time=None, limit=None):
-    '''Get trading records.
-    
-    Parameters
-    ------------------------
-    symbol : str
-        Required parameter. The symbol of the market as a string, 
-        e.g. 'BTCUSD'.
-    from_time : int
-        The time from which to begin your lookup, in epoch time 
-        (seconds).
-    limit : int
-        The number of rows to fetch. Defaults to 500; maximum is 1000.
+def public_trading_records(self, **kwargs):
+    """
+    Get recent trades. You can find a complete history of trades on Bybit
+    at https://public.bybit.com/.
 
-    '''
+    :param kwargs: See
+        https://bybit-exchange.github.io/docs/inverse/#t-latestsymbolinfo.
+    :returns: Request results as dictionary.
+    """
 
-def get_symbols(self):
-    '''Get trading records.
-    
-    There are no parameters for this method.
+def query_symbol(self):
+    """
+    Get symbol info.
 
-    '''
+    :returns: Request results as dictionary.
+    """
 
-def server_time(self):
-    '''Fetches the exchange server time.
-    
-    There are no parameters for this method.
+def liquidated_orders(self, **kwargs):
+    """
+    Retrieve the liquidated orders. The query range is the last seven days
+    of data.
 
-    '''
+    :param kwargs: See
+        https://bybit-exchange.github.io/docs/inverse/#t-query_liqrecords.
+    :returns: Request results as dictionary.
+    """
 
-def announcement(self):
-    '''Fetches the exchange's recent announcements.
-    
-    There are no parameters for this method.
+def query_mark_price_kline(self, **kwargs):
+    """
+    Query mark price kline (like query_kline but for mark price).
 
-    '''
-```
+    :param kwargs: See
+        https://bybit-exchange.github.io/docs/inverse/#t-markpricekline.
+    :returns: Request results as dictionary.
+    """
 
-## Private Endpoints
+def open_interest(self, **kwargs):
+    """
+    Gets the total amount of unsettled contracts. In other words, the total
+    number of contracts held in open positions.
 
-```python
-def place_active_order(self, symbol, order_type, side, qty, price=None, 
-    time_in_force='GoodTillCancel', take_profit=None, stop_loss=None, 
-    reduce_only=False, close_on_trigger=False, order_link_id=None):
-    '''Places a standard order.
-    
-    Parameters
-    ------------------------
-    symbol : str
-        Required parameter. The symbol of the market as a string, 
-        e.g. 'BTCUSD'.
-    order_type : str
-        Required parameter. The type of order to place. The options 
-        are 'Market' or 'Limit'.
-    side : str
-        Required parameter. Which side of the orderbook to place an
-        order. The options are 'Buy' or 'Sell'.
-    qty : int
-        Required parameter. Number of contracts for the order. Must
-        be an integer and cannot be fractional.
-    price : float
-        Required parameter ONLY if the order_type is 'Limit'. The price 
-        at which to set the order.  Must be rounded to the nearest 
-        half (0.5).
-    time_in_force : str
-        The execution method of the order. 'GoodTillCancel' will keep
-        your order alive until you cancel it. 'ImmediateOrCancel' will
-        cancel the order if it is not at least partially filled
-        immediately. 'FillOrKill' forces the order to be completely
-        filled immediately, otherwise it is canceled. 'PostOnly' will
-        cancel the order if it would have been executed immediately
-        at market, preventing accidental fills.
-    take_profit : float
-        The price at which to set an optional take profit order once
-        your order is filled. Must be rounded to the nearest half 
-        (0.5).
-    stop_loss : float
-        The price at which to set an optional stop loss order once
-        your order is filled. Must be rounded to the nearest half 
-        (0.5).
-    reduce_only : bool
-        The order wqill only execute if it reduces your open position.
-        otherwise it will be canceled.
-    close_on_trigger : bool
-        Useful for orders that are meant to close your position. When
-        this order is filled, it will close your position and cancel
-        all orders for the given market.
-    order_link_id : str
-        Used to set a custom order ID that can be later used to 
-        retrieve information about this particular order.
+    :param kwargs: See
+        https://bybit-exchange.github.io/docs/inverse/#t-marketopeninterest.
+    :returns: Request results as dictionary.
+    """
 
-    '''
+def latest_big_deal(self, **kwargs):
+    """
+    Obtain filled orders worth more than 500,000 USD within the last 24h.
 
-def get_active_order(self, order_id=None, order_link_id=None, symbol=None,
-    order=None, page=None, limit=None, order_status=None):
-    '''Get information about an open order.
-    
-    Parameters
-    ------------------------
-    order_id : str
-        This is the ID set by the exchange.
-    order_link_id : str
-        This is the ID set by the user.
-    symbol : str
-        The symbol of the market as a string, e.g. 'BTCUSD'. Used to
-        filter your results.
-    order : int
-        Used to sort orders by the creation date, in epoch time 
-        (seconds).
-    page : int
-        The number of pages of data to retrieve.
-    limit : int
-        The total number of orders to retrieve.
-    order_status : str
-        Filter results by the status of the order.
+    :param kwargs: See
+        https://bybit-exchange.github.io/docs/inverse/#t-marketbigdeal.
+    :returns: Request results as dictionary.
+    """
 
-    '''
+def long_short_ratio(self, **kwargs):
+    """
+    Gets the Bybit long-short ratio.
 
-def cancel_active_order(self, symbol, order_id=None, order_link_id=None):
-    '''Cancels an open order.
-    
-    Parameters
-    ------------------------
-    symbol : str
-        Required parameter. The symbol of the market as a string, 
-        e.g. 'BTCUSD'.
-    order_id : str
-        Required parameter ONLY if order_link_id is not provided.
-        This is the ID set by the exchange.
-    order_link_id : str
-        Required parameter ONLY if order_id is not provided.
-        This is the ID set by the user.
+    :param kwargs: See
+        https://bybit-exchange.github.io/docs/inverse/#t-marketaccountratio.
+    :returns: Request results as dictionary.
+    """
 
-    '''
+def place_active_order(self, **kwargs):
+    """
+    Places an active order. For more information, see
+    https://bybit-exchange.github.io/docs/inverse/#t-activeorders.
 
-def cancel_all_active_orders(self, symbol):
-    '''Cancels all open orders for a given symbol.
-    
-    Parameters
-    ------------------------
-    symbol : str
-        Required parameter. The symbol of the market as a string, 
-        e.g. 'BTCUSD'.
+    :param kwargs: See
+        https://bybit-exchange.github.io/docs/inverse/#t-activeorders.
+    :returns: Request results as dictionary.
+    """
 
-    '''
+def place_active_order_bulk(self, orders: list, max_in_parallel=10):
+    """
+    Places multiple active orders in bulk using multithreading. For more
+    information on place_active_order, see
+    https://bybit-exchange.github.io/docs/inverse/#t-activeorders.
 
-def replace_active_order(self, order_id, symbol, p_r_qty=None, 
-    p_r_price=None):
-    '''Replaces or amends an open order.
-    
-    Parameters
-    ------------------------
-    order_id : str
-        Required parameter. This is the ID set by the exchange.
-    symbol : str
-        Required parameter. The symbol of the market as a string, 
-        e.g. 'BTCUSD'.
-    p_r_qty : int
-        Used to change the quantity of your current order.
-    p_r_price : float
-        Used to change the price at which the current order is set.
-        Must be rounded to the nearest half (0.5).
+    :param list orders: A list of orders and their parameters.
+    :param max_in_parallel: The number of requests to be sent in parallel.
+        Note that you are limited to 50 requests per second.
+    :returns: Future request result dictionaries as a list.
+    """
 
-    '''
+def get_active_order(self, **kwargs):
+    """
+    Gets an active order. For more information, see
+    https://bybit-exchange.github.io/docs/inverse/#t-getactive.
 
-def query_active_order(self, symbol, order_id=None, order_link_id=None):
-    '''Search for a particular order.
-    
-    Parameters
-    ------------------------
-    symbol : str
-        Required parameter. The symbol of the market as a string, 
-        e.g. 'BTCUSD'.
-    order_id : str
-        Required parameter ONLY if order_link_id is not provided.
-        This is the ID set by the exchange.
-    order_link_id : str
-        Required parameter ONLY if order_id is not provided.
-        This is the ID set by the user.
+    :param kwargs: See
+        https://bybit-exchange.github.io/docs/inverse/#t-getactive.
+    :returns: Request results as dictionary.
+    """
 
-    '''
+def cancel_active_order(self, **kwargs):
+    """
+    Cancels an active order. For more information, see
+    https://bybit-exchange.github.io/docs/inverse/#t-cancelactive.
 
-def place_conditional_order(self, symbol, order_type, side, qty, 
-    base_price, stop_px, price=None, time_in_force='GoodTillCancel', 
-    trigger_by=None, close_on_trigger=False, order_link_id=None):
-    '''Places a conditional order.
-    
-    Parameters
-    ------------------------
-    symbol : str
-        Required parameter. The symbol of the market as a string, 
-        e.g. 'BTCUSD'.
-    order_type : str
-        Required parameter. The type of order to place. The options 
-        are 'Market' or 'Limit'.
-    side : str
-        Required parameter. Which side of the orderbook to place an
-        order. The options are 'Buy' or 'Sell'.
-    qty : int
-        Required parameter. Number of contracts for the order. Must
-        be an integer and cannot be fractional.
-    base_price : float
-        Required parameter. Used to compare with the value of 'stop_px', 
-        to decide whether your conditional order will be triggered by 
-        the crossing trigger price from upper side or lower side, 
-        determining the expected direction of the current conditional 
-        order. Must be rounded to the nearest half (0.5).
-    stop_px : float
-        Required parameter. The trigger price. Must be rounded to the 
-        nearest half (0.5).
-    price : float
-        Required parameter ONLY if the order_type is 'Limit'. The price 
-        at which to set the order.  Must be rounded to the nearest 
-        half (0.5).
-    time_in_force : str
-        The execution method of the order. 'GoodTillCancel' will keep
-        your order alive until you cancel it. 'ImmediateOrCancel' will
-        cancel the order if it is not at least partially filled
-        immediately. 'FillOrKill' forces the order to be completely
-        filled immediately, otherwise it is canceled. 'PostOnly' will
-        cancel the order if it would have been executed immediately
-        at market, preventing accidental fills.
-    trigger_by : str
-        The price used for the trigger. Options are 'LastPrice', 
-        'MarkPrice', and 'IndexPrice'. Defaults to 'LastPrice'.
-    close_on_trigger : bool
-        Useful for orders that are meant to close your position. When
-        this order is filled, it will close your position and cancel
-        all orders for the given market.
-    order_link_id : str
-        Used to set a custom order ID that can be later used to 
-        retrieve information about this particular order.
+    :param kwargs: See
+        https://bybit-exchange.github.io/docs/inverse/#t-cancelactive.
+    :returns: Request results as dictionary.
+    """
 
-    '''
+def cancel_active_order_bulk(self, orders: list, max_in_parallel=10):
+    """
+    Cancels multiple active orders in bulk using multithreading. For more
+    information on cancel_active_order, see
+    https://bybit-exchange.github.io/docs/inverse/#t-activeorders.
 
-def get_conditional_order(self, stop_order_id=None, order_link_id=None,
-    symbol=None, stop_order_status=None, order=None, page=None,
-    limit=None):
-    '''Get information about an open conditional order.
-    
-    Parameters
-    ------------------------
-    stop_order_id : str
-        This is the ID set by the exchange.
-    order_link_id : str
-        This is the ID set by the user.
-    symbol : str
-        The symbol of the market as a string, e.g. 'BTCUSD'. Used to
-        filter your results.
-    stop_order_status : str
-        Filter results by the status of the conditional order.
-    order : int
-        Used to sort orders by the creation date, in epoch time 
-        (seconds).
-    page : int
-        The number of pages of data to retrieve.
-    limit : int
-        The total number of orders to retrieve.
-    '''
+    :param list orders: A list of orders and their parameters.
+    :param max_in_parallel: The number of requests to be sent in parallel.
+        Note that you are limited to 50 requests per second.
+    :returns: Future request result dictionaries as a list.
+    """
 
-def cancel_conditional_order(self, symbol, stop_order_id=None,
-    order_link_id=None):
-    '''Cancels an open conditional order.
-    
-    Parameters
-    ------------------------
-    symbol : str
-        Required parameter. The symbol of the market as a string, 
-        e.g. 'BTCUSD'.
-    stop_order_id : str
-        Required parameter ONLY if order_link_id is not provided.
-        This is the ID set by the exchange.
-    order_link_id : str
-        Required parameter ONLY if order_id is not provided.
-        This is the ID set by the user.
+def cancel_all_active_orders(self, **kwargs):
+    """
+    Cancel all active orders that are unfilled or partially filled. Fully
+    filled orders cannot be cancelled.
 
-    '''
+    :param kwargs: See
+        https://bybit-exchange.github.io/docs/inverse/#t-cancelallactive.
+    :returns: Request results as dictionary.
+    """
 
-def cancel_all_conditional_orders(self, symbol):
-    '''Cancels all open conditional orders for a given symbol.
-    
-    Parameters
-    ------------------------
-    symbol : str
-        Required parameter. The symbol of the market as a string, 
-        e.g. 'BTCUSD'.
+def replace_active_order(self, **kwargs):
+    """
+    Replace order can modify/amend your active orders.
 
-    '''
+    :param kwargs: See
+        https://bybit-exchange.github.io/docs/inverse/#t-replaceactive.
+    :returns: Request results as dictionary.
+    """
 
-def replace_conditional_order(self, stop_order_id, order_id, symbol, 
-    p_r_qty=None, p_r_price=None, p_r_trigger_price=None):
-    '''Replaces or amends an open order.
-    
-    Parameters
-    ------------------------
-    stop_order_id : str
-        Required parameter. This is the ID set by the exchange.
-    symbol : str
-        Required parameter. The symbol of the market as a string, 
-        e.g. 'BTCUSD'.
-    p_r_qty : int
-        Used to change the quantity of your current order.
-    p_r_price : float
-        Used to change the price at which the current order is set.
-        Must be rounded to the nearest half (0.5).
-    p_r_trigger_price : float
-        Used to change the price at which the stop order is triggered.
-        Must be rounded to the nearest half (0.5).
+def replace_active_order_bulk(self, orders: list, max_in_parallel=10):
+    """
+    Replaces multiple active orders in bulk using multithreading. For more
+    information on replace_active_order, see
+    https://bybit-exchange.github.io/docs/inverse/#t-replaceactive.
 
-    '''
+    :param list orders: A list of orders and their parameters.
+    :param max_in_parallel: The number of requests to be sent in parallel.
+        Note that you are limited to 50 requests per second.
+    :returns: Future request result dictionaries as a list.
+    """
 
-def query_conditional_order(self, symbol, stop_order_id=None, 
-    order_link_id=None):
-    '''Search for a specific conditional order.
-    
-    Parameters
-    ------------------------
-    symbol : str
-        Required parameter. The symbol of the market as a string, 
-        e.g. 'BTCUSD'.
-    stop_order_id : str
-        Required parameter ONLY if order_link_id is not provided.
-        This is the ID set by the exchange.
-    order_link_id : str
-        Required parameter ONLY if order_id is not provided.
-        This is the ID set by the user.
+def query_active_order(self, **kwargs):
+    """
+    Query real-time active order information.
 
-    '''
+    :param kwargs: See
+        https://bybit-exchange.github.io/docs/inverse/#t-queryactive.
+    :returns: Request results as dictionary.
+    """
 
-def user_leverage(self):
-    '''Fetches the user's leverage.
-    
-    There are no parameters for this method.
+def place_conditional_order(self, **kwargs):
+    """
+    Places a conditional order. For more information, see
+    https://bybit-exchange.github.io/docs/inverse/#t-placecond.
 
-    '''
+    :param kwargs: See
+        https://bybit-exchange.github.io/docs/inverse/#t-placecond.
+    :returns: Request results as dictionary.
+    """
 
-def change_user_leverage(self, symbol, leverage):
-    '''Sets the user's leverage.
-    
-    Parameters
-    ------------------------
-    symbol : str
-        Required parameter. The symbol of the market as a string, 
-        e.g. 'BTCUSD'.
-    leverage : float
-        Required parameter. The desired leverage. Set to 0 for cross
-        leverage.
+def place_conditional_order_bulk(self, orders: list, max_in_parallel=10):
+    """
+    Places multiple conditional orders in bulk using multithreading. For
+    more information on place_active_order, see
+    https://bybit-exchange.github.io/docs/inverse/#t-placecond.
 
-    '''
+    :param orders: A list of orders and their parameters.
+    :param max_in_parallel: The number of requests to be sent in parallel.
+        Note that you are limited to 50 requests per second.
+    :returns: Future request result dictionaries as a list.
+    """
 
-def my_position(self, symbol):
-    '''Fetches the user's position.
-    
-    Parameters
-    ------------------------
-    symbol : str
-        Required parameter. The symbol of the market as a string, 
-        e.g. 'BTCUSD'.
+def get_conditional_order(self, **kwargs):
+    """
+    Gets a conditional order. For more information, see
+    https://bybit-exchange.github.io/docs/inverse/#t-getcond.
 
-    '''
+    :param kwargs: See
+        https://bybit-exchange.github.io/docs/inverse/#t-getcond.
+    :returns: Request results as dictionary.
+    """
 
-def change_margin(self, symbol, margin):
-    '''Changes the margin of the current position.
-    
-    Parameters
-    ------------------------
-    symbol : str
-        Required parameter. The symbol of the market as a string, 
-        e.g. 'BTCUSD'.
-    margin : str
-        Required parameter. Desired margin. 
+def cancel_conditional_order(self, **kwargs):
+    """
+    Cancels a conditional order. For more information, see
+    https://bybit-exchange.github.io/docs/inverse/#t-cancelcond.
 
-    '''
+    :param kwargs: See
+        https://bybit-exchange.github.io/docs/inverse/#t-cancelcond.
+    :returns: Request results as dictionary.
+    """
 
-def set_trading_stop(self, symbol, take_profit=None, stop_loss=None,
-    trailing_stop=None, new_trailing_active=None):
-    '''Sets conditions for the open position..
-    
-    Parameters
-    ------------------------
-    symbol : str
-        Required parameter. The symbol of the market as a string, 
-        e.g. 'BTCUSD'.
-    take_profit : float
-        The price at which to set an optional take profit for the 
-        current position. Must be rounded to the nearest half (0.5).
-        Setting a 0 will cancel the position's take profit.
-    stop_loss : float
-        The price at which to set an optional stop loss for the 
-        current position. Must be rounded to the nearest half (0.5).
-        Setting a 0 will cancel the position's stop loss.
-    trailing_stop : float
-        The price at which to set an optional trailing stop for the
-        current position. Must be rounded to the nearest half (0.5).
-        Setting a 0 will cancel the position's trailing stop.
-    new_trailing_active : float
-        The trigger price of the trailing stop, if set. Must be rounded 
-        to the nearest half (0.5).
+def cancel_conditional_order_bulk(self, orders: list, max_in_parallel=10):
+    """
+    Cancels multiple conditional orders in bulk using multithreading. For
+    more information on cancel_active_order, see
+    https://bybit-exchange.github.io/docs/inverse/#t-cancelcond.
 
-    '''
+    :param list orders: A list of orders and their parameters.
+    :param max_in_parallel: The number of requests to be sent in parallel.
+        Note that you are limited to 50 requests per second.
+    :returns: Future request result dictionaries as a list.
+    """
 
-def get_risk_limit(self):
-    '''Fetches the user's risk limit.
-    
-    There are no parameters for this method.
 
-    '''
 
-def set_risk_limit(self, symbol, risk_id):
-    '''Sets the user's risk limit.
-    
-    Parameters
-    ------------------------
-    symbol : str
-        Required parameter. The symbol of the market as a string, 
-        e.g. 'BTCUSD'.
-    risk_id : str
-        Required parameter. The risk identifier. Can be found with
-        get_risk_limit().
+def cancel_all_conditional_orders(self, **kwargs):
+    """
+    Cancel all conditional orders that are unfilled or partially filled.
+    Fully filled orders cannot be cancelled.
 
-    '''
+    :param kwargs: See
+        https://bybit-exchange.github.io/docs/inverse/#t-cancelallcond.
+    :returns: Request results as dictionary.
+    """
 
-def get_last_funding_rate(self, symbol):
-    '''Fetches the last funding rate for the particular symbol.
-    
-    Parameters
-    ------------------------
-    symbol : str
-        Required parameter. The symbol of the market as a string, 
-        e.g. 'BTCUSD'.
+def replace_conditional_order(self, **kwargs):
+    """
+    Replace conditional order can modify/amend your conditional orders.
 
-    '''
+    :param kwargs: See
+        https://bybit-exchange.github.io/docs/inverse/#t-replacecond.
+    :returns: Request results as dictionary.
+    """
 
-def my_last_funding_fee(self, symbol):
-    '''Fetches the user's last funding fee for the particular symbol.
-    
-    Parameters
-    ------------------------
-    symbol : str
-        Required parameter. The symbol of the market as a string, 
-        e.g. 'BTCUSD'.
+def replace_conditional_order_bulk(self, orders: list, max_in_parallel=10):
+    """
+    Replaces multiple conditional orders in bulk using multithreading. For
+    more information on replace_active_order, see
+    https://bybit-exchange.github.io/docs/inverse/#t-replacecond.
 
-    '''
+    :param list orders: A list of orders and their parameters.
+    :param max_in_parallel: The number of requests to be sent in parallel.
+        Note that you are limited to 50 requests per second.
+    :returns: Future request result dictionaries as a list.
+    """
 
-def predicted_funding_rate(self, symbol):
-    '''Fetches the next predicted funding rate for the particular 
-    symbol.
-    
-    Parameters
-    ------------------------
-    symbol : str
-        Required parameter. The symbol of the market as a string, 
-        e.g. 'BTCUSD'.
+def query_conditional_order(self, **kwargs):
+    """
+    Query real-time conditional order information.
 
-    '''
+    :param kwargs: See
+        https://bybit-exchange.github.io/docs/inverse/#t-querycond.
+    :returns: Request results as dictionary.
+    """
+
+def my_position(self, **kwargs):
+    """
+    Get my position list.
+
+    :param kwargs: See
+        https://bybit-exchange.github.io/docs/inverse/#t-myposition.
+    :returns: Request results as dictionary.
+    """
+
+def set_auto_add_margin(self, **kwargs):
+    """
+    For linear markets only. Set auto add margin, or Auto-Margin
+    Replenishment.
+
+    :param kwargs: See
+        https://bybit-exchange.github.io/docs/linear/#t-setautoaddmargin.
+    :returns: Request results as dictionary.
+    """
+
+def set_leverage(self, **kwargs):
+    """
+    For linear markets only. Change user leverage.
+
+    :param kwargs: See
+        https://bybit-exchange.github.io/docs/linear/#t-setleverage.
+    :returns: Request results as dictionary.
+    """
+
+def cross_isolated_margin_switch(self, **kwargs):
+    """
+    For linear markets only. Switch Cross/Isolated; must be leverage value
+    when switching from Cross to Isolated.
+
+    :param kwargs: See
+        https://bybit-exchange.github.io/docs/linear/#t-marginswitch.
+    :returns: Request results as dictionary.
+    """
+
+
+def change_margin(self, **kwargs):
+    """
+    Update margin.
+
+    :param kwargs: See
+        https://bybit-exchange.github.io/docs/inverse/#t-changemargin.
+    :returns: Request results as dictionary.
+    """
+
+def set_trading_stop(self, **kwargs):
+    """
+    Set take profit, stop loss, and trailing stop for your open position.
+
+    :param kwargs: See
+        https://bybit-exchange.github.io/docs/inverse/#t-tradingstop.
+    :returns: Request results as dictionary.
+    """
+
+def add_reduce_margin(self, **kwargs):
+    """
+    For linear markets only. Add margin.
+
+    :param kwargs: See
+        https://bybit-exchange.github.io/docs/linear/#t-addmargin.
+    :returns: Request results as dictionary.
+    """
+
+def user_leverage(self, **kwargs):
+    """
+    Get user leverage.
+
+    :param kwargs: See
+        https://bybit-exchange.github.io/docs/inverse/#t-getleverage.
+    :returns: Request results as dictionary.
+    """
+
+def change_user_leverage(self, **kwargs):
+    """
+    Change user leverage.
+
+    :param kwargs: See
+        https://bybit-exchange.github.io/docs/inverse/#t-changeleverage.
+    :returns: Request results as dictionary.
+    """
+
+def user_trade_records(self, **kwargs):
+    """
+    Get user's trading records. The results are ordered in ascending order
+    (the first item is the oldest).
+
+    :param kwargs: See
+        https://bybit-exchange.github.io/docs/inverse/#t-usertraderecords.
+    :returns: Request results as dictionary.
+    """
+
+def closed_profit_and_loss(self, **kwargs):
+    """
+    Get user's closed profit and loss records. The results are ordered in
+    descending order (the first item is the latest).
+
+    :param kwargs: See
+        https://bybit-exchange.github.io/docs/inverse/#t-closedprofitandloss.
+    :returns: Request results as dictionary.
+    """
+
+def get_risk_limit(self, is_linear=False):
+    """
+    Get risk limit.
+
+    :param is_linear: True for linear, False for inverse. Defaults to
+        False.
+    :returns: Request results as dictionary.
+    """
+
+def set_risk_limit(self, **kwargs):
+    """
+    Set risk limit.
+
+    :param kwargs: See
+        https://bybit-exchange.github.io/docs/inverse/#t-setrisklimit.
+    :returns: Request results as dictionary.
+    """
+
+def get_the_last_funding_rate(self, **kwargs):
+    """
+    The funding rate is generated every 8 hours at 00:00 UTC, 08:00 UTC and
+    16:00 UTC. For example, if a request is sent at 12:00 UTC, the funding
+    rate generated earlier that day at 08:00 UTC will be sent.
+
+    :param kwargs: See
+        https://bybit-exchange.github.io/docs/inverse/#t-fundingrate.
+    :returns: Request results as dictionary.
+    """
+
+def my_last_funding_fee(self, **kwargs):
+    """
+    Funding settlement occurs every 8 hours at 00:00 UTC, 08:00 UTC and
+    16:00 UTC. The current interval's fund fee settlement is based on the
+    previous interval's fund rate. For example, at 16:00, the settlement is
+    based on the fund rate generated at 8:00. The fund rate generated at
+    16:00 will be used at 0:00 the next day.
+
+    :param kwargs: See
+        https://bybit-exchange.github.io/docs/inverse/#t-mylastfundingfee.
+    :returns: Request results as dictionary.
+    """
+
+def predicted_funding_rate(self, **kwargs):
+    """
+    Get predicted funding rate and my funding fee.
+
+    :param kwargs: See
+        https://bybit-exchange.github.io/docs/inverse/#t-predictedfunding.
+    :returns: Request results as dictionary.
+    """
 
 def api_key_info(self):
-    '''Fetches information about the user's current API key.
-    
-    There are no parameters for this method.
+    """
+    Get user's API key info.
 
-    '''
+    :returns: Request results as dictionary.
+    """
 
-def get_wallet_balance(self, coin):
-    '''Fetches the user's wallet balance.
-    
-    Parameters
-    ------------------------
-    coin : str
-        Required parameter. The cryptocurrency ticker as a string, 
-        e.g. 'BTC'.
+def lcp_info(self, **kwargs):
+    """
+    Get user's LCP (data refreshes once an hour). Only supports inverse
+    perpetual at present. See
+    https://bybit-exchange.github.io/docs/inverse/#t-liquidity to learn
+    more.
 
-    '''
+    :param kwargs: See
+        https://bybit-exchange.github.io/docs/inverse/#t-lcp.
+    :returns: Request results as dictionary.
+    """
 
-def wallet_fund_records(self, start_date=None, end_date=None,
-    currency=None, coin=None, wallet_fund_type=None, page=None,
-    limit=None):
-    '''Fetches the user's wallet records.
-    
-    Parameters
-    ------------------------
-    start_date : int
-        The start date of your record search, in epoch time (seconds).
-    end_date : int
-        The end date of your record search, in epoch time (seconds).
-    currency : str
-        A specific coin/currency to search for.
-    coin : str
-        An alias for currrency.
-    wallet_fund_type : str
-        The type of events to search for. Options are 'Deposit', 
-        'Withdraw', 'RealisedPNL', 'Commission', 'Refund', 'Prize',
-        'ExchangeOrderWithdraw', and 'ExchangeOrderDeposit'.
-    page : int
-        The number of pages of data to retrieve.
-    limit : int
-        The total number of orders to retrieve.
+def get_wallet_balance(self, **kwargs):
+    """
+    Get wallet balance info.
 
-    '''
+    :param kwargs: See
+        https://bybit-exchange.github.io/docs/inverse/#t-balance.
+    :returns: Request results as dictionary.
+    """
 
-def withdraw_records(self, start_date=None, end_date=None, coin=None,
-    status=None, page=None, limit=None):
-    '''Fetches the user's withdrawal records.
-    
-    Parameters
-    ------------------------
-    start_date : int
-        The start date of your record search, in epoch time (seconds).
-    end_date : int
-        The end date of your record search, in epoch time (seconds).
-    coin : str
-        A specific coin/currency to search for.
-    status : str
-        Filter results by the status of the withdrawal.
-    page : int
-        The number of pages of data to retrieve.
-    limit : int
-        The total number of orders to retrieve.
+def wallet_fund_records(self, **kwargs):
+    """
+    Get wallet fund records. This endpoint also shows exchanges from the
+    Asset Exchange, where the types for the exchange are
+    ExchangeOrderWithdraw and ExchangeOrderDeposit.
 
-    '''
+    :param kwargs: See
+        https://bybit-exchange.github.io/docs/inverse/#t-walletrecords.
+    :returns: Request results as dictionary.
+    """
 
-def user_trade_records(self, symbol, order_id=None, start_time=None, 
-    page=None, limit=None):
-    '''Fetches the user's trade records.
-    
-    Parameters
-    ------------------------
-    symbol : str
-        Required parameter. The symbol of the market as a string, 
-        e.g. 'BTCUSD'.
-    order_id : str
-        This is the ID set by the exchange.
-    start_time : int
-        The start time of your record search, in epoch time (seconds).
-    page : int
-        The number of pages of data to retrieve.
-    limit : int
-        The total number of orders to retrieve.
+def withdraw_records(self, **kwargs):
+    """
+    Get withdrawal records.
 
-    '''
+    :param kwargs: See
+        https://bybit-exchange.github.io/docs/inverse/#t-withdrawrecords.
+    :returns: Request results as dictionary.
+    """
+
+def asset_exchange_records(self, **kwargs):
+    """
+    Get asset exchange records.
+
+    :param kwargs: See
+        https://bybit-exchange.github.io/docs/inverse/#t-assetexchangerecords.
+    :returns: Request results as dictionary.
+    """
+
+def server_time(self):
+    """
+    Get Bybit server time.
+
+    :returns: Request results as dictionary.
+    """
+
+def announcement(self):
+    """
+    Get Bybit OpenAPI announcements in the last 30 days by reverse order.
+
+    :returns: Request results as dictionary.
+    """
+
 ```
 
 ## Custom Methods
 
 ```python
 def close_position(self, symbol):
-    '''Closes your open position.
+    """
+    Closes your open position. Makes two requests (position, order).
 
-    Parameters
-    ------------------------
-    symbol : str
-        Required parameter. The symbol of the market as a string, 
+    :param symbol: Required parameter. The symbol of the market as a string,
         e.g. 'BTCUSD'.
+    :returns: Request results as dictionary.
 
-    '''
+    """
 ```
