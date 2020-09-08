@@ -25,37 +25,50 @@ import websocket
 
 from concurrent.futures import ThreadPoolExecutor
 
-VERSION = '1.0.3'
+from .exceptions import InvalidRequestError
+
+VERSION = '1.0.4'
 
 
 class HTTP:
     """
     Connector for Bybit's HTTP API.
 
-    endpoint : str
-        Required parameter. The endpoint URL of the HTTP API, e.g.
+    :param endpoint: Required parameter. The endpoint URL of the HTTP API, e.g.
         'https://api-testnet.bybit.com'.
-    api_key : str
-        Your API key. Required for authenticated endpoints. Defaults
+    :type endpoint: str
+
+    :param api_key: Your API key. Required for authenticated endpoints. Defaults
         to None.
-    api_secret : str
-        Your API secret key. Required for authenticated endpoints.
-        Defaults to None.
-    logging_level : int
-        The logging level of the built-in logger. Defaults to
-        logging.INFO. Options are CRITICAL (50), ERROR (40),
-        WARNING (30), INFO (20), DEBUG (10), or NOTSET (0).
-    http_timeout : int
-        The timeout of each API request in seconds. Defaults to 10
-        seconds.
-    referral_id : str
-        An optional referer ID can be added to each request for
+    :type api_key: str
+
+    :param api_secret: Your API secret key. Required for authenticated
+        endpoints. Defaults to None.
+    :type api_secret: str
+
+    :param logging_level: The logging level of the built-in logger. Defaults to
+        logging.INFO. Options are CRITICAL (50), ERROR (40), WARNING (30),
+        INFO (20), DEBUG (10), or NOTSET (0).
+    :type logging_level: Union[int, logging.level]
+
+    :param log_requests: Whether or not pybit should log each HTTP request.
+    :type log_requests: bool
+
+    :param request_timeout: The timeout of each API request in seconds. Defaults
+        to 10 seconds.
+    :type request_timeout: int
+
+    :param referral_id: An optional referer ID can be added to each request for
         identification.
+    :type referral_id: str
+
+    :returns: pybit.HTTP session.
 
     """
 
     def __init__(self, endpoint, api_key=None, api_secret=None,
-                 logging_level=logging.INFO, http_timeout=10, referral_id=None):
+                 logging_level=logging.INFO, log_requests=False,
+                 request_timeout=10, referral_id=None):
         """Initializes the HTTP class."""
 
         # Set the endpoint.
@@ -69,13 +82,14 @@ class HTTP:
         )
         self.logger = logging.getLogger(__name__)
         self.logger.info('Initializing HTTP session.')
+        self.log_requests = log_requests
 
         # Set API keys.
         self.api_key = api_key
         self.api_secret = api_secret
 
         # Set timeout.
-        self.timeout = http_timeout
+        self.timeout = request_timeout
 
         # Initialize requests session.
         self.client = requests.Session()
@@ -88,7 +102,7 @@ class HTTP:
         )
 
         # Add referral ID to header.
-        if referral_id is not None:
+        if referral_id:
             self.client.headers.update({'Referer': referral_id})
 
     def exit(self):
@@ -120,9 +134,14 @@ class HTTP:
         :returns: Request results as dictionary.
         """
 
+        if 'symbol' in kwargs and 'USDT' in kwargs['symbol']:
+            suffix = '/public/linear/kline'
+        else:
+            suffix = '/v2/public/kline/list'
+
         return self._submit_request(
             method='GET',
-            path=self.endpoint + '/v2/public/kline/list',
+            path=self.endpoint + suffix,
             query=kwargs
         )
 
@@ -151,9 +170,14 @@ class HTTP:
         :returns: Request results as dictionary.
         """
 
+        if 'symbol' in kwargs and 'USDT' in kwargs['symbol']:
+            suffix = '/public/linear/recent-trading-records'
+        else:
+            suffix = '/v2/public/trading-records'
+
         return self._submit_request(
             method='GET',
-            path=self.endpoint + '/v2/public/trading-records',
+            path=self.endpoint + suffix,
             query=kwargs
         )
 
@@ -194,9 +218,14 @@ class HTTP:
         :returns: Request results as dictionary.
         """
 
+        if 'symbol' in kwargs and 'USDT' in kwargs['symbol']:
+            suffix = '/public/linear/mark-price-kline'
+        else:
+            suffix = '/v2/public/mark-price-kline'
+
         return self._submit_request(
             method='GET',
-            path=self.endpoint + '/v2/public/mark-price-kline',
+            path=self.endpoint + suffix,
             query=kwargs
         )
 
@@ -256,13 +285,14 @@ class HTTP:
         :returns: Request results as dictionary.
         """
 
-        if kwargs['symbol'].endswith('USDT'):
-            path = self.endpoint + '/private/linear/order/create'
+        if 'symbol' in kwargs and 'USDT' in kwargs['symbol']:
+            suffix = '/private/linear/order/create'
         else:
-            path = self.endpoint + '/v2/private/order/create'
+            suffix = '/v2/private/order/create'
+
         return self._submit_request(
             method='POST',
-            path=path,
+            path=self.endpoint + suffix,
             query=kwargs,
             auth=True
         )
@@ -299,13 +329,14 @@ class HTTP:
         :returns: Request results as dictionary.
         """
 
-        if kwargs['symbol'].endswith('USDT'):
-            path = self.endpoint + '/private/linear/order/list'
+        if 'symbol' in kwargs and 'USDT' in kwargs['symbol']:
+            suffix = '/private/linear/order/list'
         else:
-            path = self.endpoint + '/open-api/order/list'
+            suffix = '/open-api/order/list'
+
         return self._submit_request(
             method='GET',
-            path=path,
+            path=self.endpoint + suffix,
             query=kwargs,
             auth=True
         )
@@ -320,13 +351,14 @@ class HTTP:
         :returns: Request results as dictionary.
         """
 
-        if kwargs['symbol'].endswith('USDT'):
-            path = self.endpoint + '/private/linear/order/cancel'
+        if 'symbol' in kwargs and 'USDT' in kwargs['symbol']:
+            suffix = '/private/linear/order/cancel'
         else:
-            path = self.endpoint + '/v2/private/order/cancel'
+            suffix = '/v2/private/order/cancel'
+
         return self._submit_request(
             method='POST',
-            path=path,
+            path=self.endpoint + suffix,
             query=kwargs,
             auth=True
         )
@@ -363,9 +395,14 @@ class HTTP:
         :returns: Request results as dictionary.
         """
 
+        if 'symbol' in kwargs and 'USDT' in kwargs['symbol']:
+            suffix = '/private/linear/order/cancel-all'
+        else:
+            suffix = '/v2/private/order/cancelAll'
+
         return self._submit_request(
             method='POST',
-            path=self.endpoint + '/v2/private/order/cancelAll',
+            path=self.endpoint + suffix,
             query=kwargs,
             auth=True
         )
@@ -379,9 +416,14 @@ class HTTP:
         :returns: Request results as dictionary.
         """
 
+        if 'symbol' in kwargs and 'USDT' in kwargs['symbol']:
+            suffix = '/private/linear/order/replace'
+        else:
+            suffix = '/open-api/order/replace'
+
         return self._submit_request(
             method='POST',
-            path=self.endpoint + '/open-api/order/replace',
+            path=self.endpoint + suffix,
             query=kwargs,
             auth=True
         )
@@ -417,13 +459,14 @@ class HTTP:
         :returns: Request results as dictionary.
         """
 
-        if kwargs['symbol'].endswith('USDT'):
-            path = self.endpoint + '/private/linear/order/search'
+        if 'symbol' in kwargs and 'USDT' in kwargs['symbol']:
+            suffix = '/private/linear/order/search'
         else:
-            path = self.endpoint + '/v2/private/order'
+            suffix = '/v2/private/order'
+
         return self._submit_request(
             method='GET',
-            path=path,
+            path=self.endpoint + suffix,
             query=kwargs,
             auth=True
         )
@@ -438,9 +481,14 @@ class HTTP:
         :returns: Request results as dictionary.
         """
 
+        if 'symbol' in kwargs and 'USDT' in kwargs['symbol']:
+            suffix = '/private/linear/stop-order/create'
+        else:
+            suffix = '/open-api/stop-order/create'
+
         return self._submit_request(
             method='POST',
-            path=self.endpoint + '/open-api/stop-order/create',
+            path=self.endpoint + suffix,
             query=kwargs,
             auth=True
         )
@@ -451,7 +499,7 @@ class HTTP:
         more information on place_active_order, see
         https://bybit-exchange.github.io/docs/inverse/#t-placecond.
 
-        :param list orders: A list of orders and their parameters.
+        :param orders: A list of orders and their parameters.
         :param max_in_parallel: The number of requests to be sent in parallel.
             Note that you are limited to 50 requests per second.
         :returns: Future request result dictionaries as a list.
@@ -477,9 +525,14 @@ class HTTP:
         :returns: Request results as dictionary.
         """
 
+        if 'symbol' in kwargs and 'USDT' in kwargs['symbol']:
+            suffix = '/private/linear/stop-order/list'
+        else:
+            suffix = '/open-api/stop-order/list'
+
         return self._submit_request(
             method='GET',
-            path=self.endpoint + '/open-api/stop-order/list',
+            path=self.endpoint + suffix,
             query=kwargs,
             auth=True
         )
@@ -494,9 +547,14 @@ class HTTP:
         :returns: Request results as dictionary.
         """
 
+        if 'symbol' in kwargs and 'USDT' in kwargs['symbol']:
+            suffix = '/private/linear/stop-order/cancel'
+        else:
+            suffix = '/open-api/stop-order/cancel'
+
         return self._submit_request(
             method='POST',
-            path=self.endpoint + '/open-api/stop-order/cancel',
+            path=self.endpoint + suffix,
             query=kwargs,
             auth=True
         )
@@ -533,9 +591,14 @@ class HTTP:
         :returns: Request results as dictionary.
         """
 
+        if 'symbol' in kwargs and 'USDT' in kwargs['symbol']:
+            suffix = '/private/linear/stop-order/cancel-all'
+        else:
+            suffix = '/v2/private/stop-order/cancelAll'
+
         return self._submit_request(
             method='POST',
-            path=self.endpoint + '/v2/private/stop-order/cancelAll',
+            path=self.endpoint + suffix,
             query=kwargs,
             auth=True
         )
@@ -549,9 +612,14 @@ class HTTP:
         :returns: Request results as dictionary.
         """
 
+        if 'symbol' in kwargs and 'USDT' in kwargs['symbol']:
+            suffix = '/private/linear/stop-order/replace'
+        else:
+            suffix = '/open-api/stop-order/replace'
+
         return self._submit_request(
             method='POST',
-            path=self.endpoint + '/open-api/stop-order/replace',
+            path=self.endpoint + suffix,
             query=kwargs,
             auth=True
         )
@@ -587,9 +655,14 @@ class HTTP:
         :returns: Request results as dictionary.
         """
 
+        if 'symbol' in kwargs and 'USDT' in kwargs['symbol']:
+            suffix = '/private/linear/stop-order/search'
+        else:
+            suffix = '/v2/private/stop-order'
+
         return self._submit_request(
             method='GET',
-            path=self.endpoint + '/v2/private/stop-order',
+            path=self.endpoint + suffix,
             query=kwargs,
             auth=True
         )
@@ -603,9 +676,64 @@ class HTTP:
         :returns: Request results as dictionary.
         """
 
+        if 'symbol' in kwargs and 'USDT' in kwargs['symbol']:
+            suffix = '/private/linear/position/list'
+        else:
+            suffix = '/v2/private/position/list'
+
         return self._submit_request(
             method='GET',
-            path=self.endpoint + '/v2/private/position/list',
+            path=self.endpoint + suffix,
+            query=kwargs,
+            auth=True
+        )
+
+    def set_auto_add_margin(self, **kwargs):
+        """
+        For linear markets only. Set auto add margin, or Auto-Margin
+        Replenishment.
+
+        :param kwargs: See
+            https://bybit-exchange.github.io/docs/linear/#t-setautoaddmargin.
+        :returns: Request results as dictionary.
+        """
+
+        return self._submit_request(
+            method='POST',
+            path=self.endpoint + '/private/linear/position/set-auto-add-margin',
+            query=kwargs,
+            auth=True
+        )
+
+    def set_leverage(self, **kwargs):
+        """
+        For linear markets only. Change user leverage.
+
+        :param kwargs: See
+            https://bybit-exchange.github.io/docs/linear/#t-setleverage.
+        :returns: Request results as dictionary.
+        """
+
+        return self._submit_request(
+            method='POST',
+            path=self.endpoint + '/private/linear/position/set-leverage',
+            query=kwargs,
+            auth=True
+        )
+
+    def cross_isolated_margin_switch(self, **kwargs):
+        """
+        For linear markets only. Switch Cross/Isolated; must be leverage value
+        when switching from Cross to Isolated.
+
+        :param kwargs: See
+            https://bybit-exchange.github.io/docs/linear/#t-marginswitch.
+        :returns: Request results as dictionary.
+        """
+
+        return self._submit_request(
+            method='POST',
+            path=self.endpoint + '/private/linear/position/switch-isolated',
             query=kwargs,
             auth=True
         )
@@ -635,9 +763,30 @@ class HTTP:
         :returns: Request results as dictionary.
         """
 
+        if 'symbol' in kwargs and 'USDT' in kwargs['symbol']:
+            suffix = '/private/linear/position/trading-stop'
+        else:
+            suffix = '/open-api/position/trading-stop'
+
         return self._submit_request(
             method='POST',
-            path=self.endpoint + '/open-api/position/trading-stop',
+            path=self.endpoint + suffix,
+            query=kwargs,
+            auth=True
+        )
+
+    def add_reduce_margin(self, **kwargs):
+        """
+        For linear markets only. Add margin.
+
+        :param kwargs: See
+            https://bybit-exchange.github.io/docs/linear/#t-addmargin.
+        :returns: Request results as dictionary.
+        """
+
+        return self._submit_request(
+            method='GET',
+            path=self.endpoint + '/private/linear/position/add-margin',
             query=kwargs,
             auth=True
         )
@@ -684,9 +833,14 @@ class HTTP:
         :returns: Request results as dictionary.
         """
 
+        if 'symbol' in kwargs and 'USDT' in kwargs['symbol']:
+            suffix = '/private/linear/trade/execution/list'
+        else:
+            suffix = '/v2/private/execution/list'
+
         return self._submit_request(
             method='GET',
-            path=self.endpoint + '/v2/private/execution/list',
+            path=self.endpoint + suffix,
             query=kwargs,
             auth=True
         )
@@ -701,23 +855,35 @@ class HTTP:
         :returns: Request results as dictionary.
         """
 
+        if 'symbol' in kwargs and 'USDT' in kwargs['symbol']:
+            suffix = '/private/linear/trade/closed-pnl/list'
+        else:
+            suffix = '/v2/private/trade/closed-pnl/list'
+
         return self._submit_request(
             method='GET',
-            path=self.endpoint + '/v2/private/trade/closed-pnl/list',
+            path=self.endpoint + suffix,
             query=kwargs,
             auth=True
         )
 
-    def get_risk_limit(self):
+    def get_risk_limit(self, is_linear=False):
         """
         Get risk limit.
 
+        :param is_linear: True for linear, False for inverse. Defaults to
+            False.
         :returns: Request results as dictionary.
         """
 
+        if is_linear:
+            suffix = '/public/linear/risk-limit'
+        else:
+            suffix = '/open-api/wallet/risk-limit/list'
+
         return self._submit_request(
             method='GET',
-            path=self.endpoint + '/open-api/wallet/risk-limit/list',
+            path=self.endpoint + suffix,
             auth=True
         )
 
@@ -737,7 +903,7 @@ class HTTP:
             auth=True
         )
 
-    def get_last_funding_rate(self, **kwargs):
+    def get_the_last_funding_rate(self, **kwargs):
         """
         The funding rate is generated every 8 hours at 00:00 UTC, 08:00 UTC and
         16:00 UTC. For example, if a request is sent at 12:00 UTC, the funding
@@ -748,11 +914,15 @@ class HTTP:
         :returns: Request results as dictionary.
         """
 
+        if 'symbol' in kwargs and 'USDT' in kwargs['symbol']:
+            suffix = '/public/linear/funding/prev-funding-rate'
+        else:
+            suffix = '/open-api/funding/prev-funding-rate'
+
         return self._submit_request(
             method='GET',
-            path=self.endpoint + '/open-api/funding/prev-funding-rate',
-            query=kwargs,
-            auth=True
+            path=self.endpoint + suffix,
+            query=kwargs
         )
 
     def my_last_funding_fee(self, **kwargs):
@@ -768,9 +938,14 @@ class HTTP:
         :returns: Request results as dictionary.
         """
 
+        if 'symbol' in kwargs and 'USDT' in kwargs['symbol']:
+            suffix = '/private/linear/funding/prev-funding'
+        else:
+            suffix = '/open-api/funding/prev-funding'
+
         return self._submit_request(
             method='GET',
-            path=self.endpoint + '/open-api/funding/prev-funding',
+            path=self.endpoint + suffix,
             query=kwargs,
             auth=True
         )
@@ -784,9 +959,14 @@ class HTTP:
         :returns: Request results as dictionary.
         """
 
+        if 'symbol' in kwargs and 'USDT' in kwargs['symbol']:
+            suffix = '/private/linear/funding/predicted-funding'
+        else:
+            suffix = '/open-api/funding/predicted-funding'
+
         return self._submit_request(
             method='GET',
-            path=self.endpoint + '/open-api/funding/predicted-funding',
+            path=self.endpoint + suffix,
             query=kwargs,
             auth=True)
 
@@ -1044,7 +1224,10 @@ class HTTP:
                           v is not None}
         else:
             req_params = {}
-        self.logger.info(f'Request -> {method} {path}: {req_params}')
+
+        # Log the request.
+        if self.log_requests:
+            self.logger.info(f'Request -> {method} {path}: {req_params}')
 
         # Prepare request; use 'params' for GET and 'data' for POST.
         if method == 'GET':
@@ -1059,8 +1242,21 @@ class HTTP:
         # Send request and return headers with body.
         s = self.client.send(r, timeout=self.timeout)
 
-        # Return dict.
-        return s.json()
+        # Convert response to dictionary, or raise if requests error.
+        try:
+            s_json = s.json()
+        except json.decoder.JSONDecodeError:
+            raise InvalidRequestError(
+                f'{s.reason} ({s.status_code})'
+            )
+
+        # If Bybit returns an error, raise.
+        if s_json['ret_code']:
+            raise InvalidRequestError(
+                f'{s_json["ret_msg"]} ({s_json["ret_code"]})'
+            )
+        else:
+            return s_json
 
 
 class WebSocket:
