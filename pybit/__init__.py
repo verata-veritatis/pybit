@@ -1262,51 +1262,37 @@ class HTTP:
 class WebSocket:
     """
     Connector for Bybit's WebSocket API.
-
-    Parameters
-    ------------------------
-    endpoint : str
-        Required parameter. The endpoint of the remote websocket.
-    api_key : str
-        Your API key. Required for authenticated endpoints. Defaults
-        to None.
-    api_secret : str
-        Your API secret key. Required for authenticated endpoints.
-        Defaults to None.
-    subscriptions : list
-        A list of desired topics to subscribe to. See API documentation
-        for more information. Defaults to an empty list, which will
-        raise an error.
-    logging_level : int
-        The logging level of the built-in logger. Defaults to
-        logging.INFO. Options are CRITICAL (50), ERROR (40),
-        WARNING (30), INFO (20), DEBUG (10), or NOTSET (0).
-    max_data_length : int
-        The maximum number of rows for the stored dataset. A smaller
-        number will prevent performance or memory issues.
-    ping_interval : int
-        The number of seconds between each automated ping.
-    ping_timeout : int
-        The number of seconds to wait for 'pong' before an Exception is
-        raised.
-
-    Notes
-    ------------------------
-    Inverse Perpetual endpoints:
-    wss://stream-testnet.bybit.com/realtime
-    wss://stream.bybit.com/realtime
-
-    USDT Perpetual endpoints:
-    wss://stream-testnet.bybit.com/realtime_public
-    wss://stream-testnet.bybit.com/realtime_private
-    wss://stream.bybit.com/realtime_public
-    wss://stream.bybit.com/realtime_private
     """
 
     def __init__(self, endpoint, api_key=None, api_secret=None,
                  subscriptions=None, logging_level=logging.INFO,
-                 max_data_length=200, ping_interval=30, ping_timeout=10):
-        """Initializes the WebSocket class."""
+                 max_data_length=200, ping_interval=30, ping_timeout=10,
+                 restart_on_error=True):
+        """
+        Initializes the websocket session.
+
+        :param endpoint: Required parameter. The endpoint of the remote
+            websocket.
+        :param api_key: Your API key. Required for authenticated endpoints.
+            Defaults to None.
+        :param api_secret: Your API secret key. Required for authenticated
+            endpoints. Defaults to None.
+        :param subscriptions: A list of desired topics to subscribe to. See API
+            documentation for more information. Defaults to an empty list, which
+            will raise an error.
+        :param logging_level: The logging level of the built-in logger. Defaults
+            to logging.INFO. Options are CRITICAL (50), ERROR (40),
+            WARNING (30), INFO (20), DEBUG (10), or NOTSET (0).
+        :param max_data_length: The maximum number of rows for the stored
+            dataset. A smaller number will prevent performance or memory issues.
+        :param ping_interval: The number of seconds between each automated ping.
+        :param ping_timeout: The number of seconds to wait for 'pong' before an
+            Exception is raised.
+        :param restart_on_error: Whether or not the connection should restart on
+            error.
+
+        :returns: WebSocket session.
+        """
 
         if not subscriptions:
             raise Exception('Subscription list cannot be empty!')
@@ -1361,6 +1347,9 @@ class WebSocket:
         self.ping_interval = ping_interval
         self.ping_timeout = ping_timeout
 
+        # Restart on error.
+        self.handle_error = restart_on_error
+
         # Set initial booleans.
         self.exited = False
         self.auth = False
@@ -1370,12 +1359,11 @@ class WebSocket:
         self._connect(self.endpoint)
 
     def fetch(self, topic):
-        """Fetches data from the subscribed topic.
+        """
+        Fetches data from the subscribed topic.
 
-        Parameters
-        ------------------------
-        topic : str
-            Required parameter. The subscribed topic to poll.
+        :param topic: Required parameter. The subscribed topic to poll.
+        :returns: Filtered data as dict.
         """
 
         # If topic isn't a string.
@@ -1402,13 +1390,17 @@ class WebSocket:
             return self.data[topic]
 
     def ping(self):
-        """Pings the remote server to test the connection. The status of the
-        connection can be monitored using ws.ping()."""
+        """
+        Pings the remote server to test the connection. The status of the
+        connection can be monitored using ws.ping().
+        """
 
         self.ws.send(json.dumps({'op': 'ping'}))
 
     def exit(self):
-        """Closes the websocket connection."""
+        """
+        Closes the websocket connection.
+        """
 
         self.ws.close()
         while self.ws.sock.connected:
@@ -1416,7 +1408,9 @@ class WebSocket:
         self.exited = True
 
     def _auth(self):
-        """Authorize websocket connection."""
+        """
+        Authorize websocket connection.
+        """
 
         # Generate expires.
         expires = str(int(time.time() * 10 ** 3))
@@ -1437,7 +1431,9 @@ class WebSocket:
         )
 
     def _connect(self, url):
-        """Connect to the websocket in a thread."""
+        """
+        Open websocket in a thread.
+        """
 
         self.ws = websocket.WebSocketApp(
             url=url,
@@ -1487,12 +1483,16 @@ class WebSocket:
 
     @staticmethod
     def _find_index(source, target):
-        """Find the index in source list of the targeted ID."""
+        """
+        Find the index in source list of the targeted ID.
+        """
         return next(i for i, j in enumerate(source) if j['id'] == target['id'])
 
     def _on_message(self, message):
-        """Parse a couple select messages. Similar structure to the
-        official WS connector. """
+        """
+        Parse incoming messages. Similar structure to the
+        official WS connector.
+        """
 
         # Load dict of message.
         msg_json = json.loads(message)
@@ -1595,21 +1595,26 @@ class WebSocket:
                 self.data[topic][msg_json['data'][0]['symbol']] = data
 
     def _on_error(self, error):
-        """Exit on errors and raise exception."""
+        """
+        Exit on errors and raise exception, or attempt reconnect.
+        """
 
         if not self.exited:
             self.logger.error(f'WebSocket encountered error: {error}.')
             self.exit()
 
         # Reconnect.
-        self._connect(self.endpoint)
+        if self.handle_error:
+            self._connect(self.endpoint)
 
     def _on_open(self):
-        """Log WS open."""
-
+        """
+        Log WS open.
+        """
         self.logger.debug('WebSocket opened.')
 
     def _on_close(self):
-        """Log WS close."""
-
+        """
+        Log WS close.
+        """
         self.logger.info('WebSocket closed.')
