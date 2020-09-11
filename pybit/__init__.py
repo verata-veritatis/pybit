@@ -1204,6 +1204,12 @@ class HTTP:
 
         """
 
+        # Bug fix: change floating whole numbers to integers to prevent
+        # auth signature errors.
+        for i in query.keys():
+            if isinstance(query[i], float) and query[i] == int(query[i]):
+                query[i] = int(query[i])
+
         # Authenticate if we are using a private endpoint.
         if auth:
 
