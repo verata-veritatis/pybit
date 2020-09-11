@@ -31,13 +31,13 @@ Create an HTTP session and connect via WebSocket:
 ```python
 session = HTTP(
     endpoint='https://api.bybit.com', 
-    api_key='...', 
+    api_key='...',
     api_secret='...'
 )
 ws = WebSocket(
     endpoint='wss://stream.bybit.com/realtime', 
     subscriptions=['order', 'position'], 
-    api_key='...', 
+    api_key='...',
     api_secret='...'
 )
 ```
@@ -64,7 +64,8 @@ ws.fetch('order')
 ws.fetch('position')
 ```
 Check out the example python files for more information on available
-endpoints and methods.
+endpoints and methods, and more documentation on the `HTTP` methods can
+be found here: https://github.com/verata-veritatis/pybit/blob/master/docs/HTTP.md.
 
 ## Contact
 You can reach out to me via Telegram: @verataveritatis. I'm pretty active on the [BybitAPI Telegram](https://t.me/Bybitapi) group chat.
