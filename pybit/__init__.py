@@ -58,6 +58,9 @@ class HTTP:
         to 10 seconds.
     :type request_timeout: int
 
+    :param force_retry: Whether or not pybit should retry a timed-out request.
+    :type force_retry: bool
+
     :param referral_id: An optional referer ID can be added to each request for
         identification.
     :type referral_id: str
@@ -68,7 +71,8 @@ class HTTP:
 
     def __init__(self, endpoint, api_key=None, api_secret=None,
                  logging_level=logging.INFO, log_requests=False,
-                 request_timeout=10, referral_id=None):
+                 request_timeout=10, force_retry=False,
+                 referral_id=None):
         """Initializes the HTTP class."""
 
         # Set the endpoint.
@@ -90,6 +94,7 @@ class HTTP:
 
         # Set timeout.
         self.timeout = request_timeout
+        self.force_retry = force_retry
 
         # Initialize requests session.
         self.client = requests.Session()
@@ -1248,8 +1253,17 @@ class HTTP:
                 requests.Request(method, path, data=json.dumps(req_params))
             )
 
-        # Send request and return headers with body.
-        s = self.client.send(r, timeout=self.timeout)
+        # Send request and return headers with body. Retry if failed.
+        while True:
+            try:
+                s = self.client.send(r, timeout=self.timeout)
+                break
+            except requests.exceptions.ReadTimeout as e:
+                self.logger.error(e)
+                if self.force_retry:
+                    continue
+                else:
+                    return None
 
         # Convert response to dictionary, or raise if requests error.
         try:
