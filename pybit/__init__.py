@@ -1436,10 +1436,10 @@ class WebSocket:
         """
 
         # Generate expires.
-        expires = str(int(time.time() * 10 ** 3))
+        expires = int((time.time() + 1) * 1000)
 
         # Generate signature.
-        _val = 'GET/realtime' + expires
+        _val = f'GET/realtime{expires}'
         signature = str(hmac.new(
             bytes(self.api_secret, 'utf-8'),
             bytes(_val, 'utf-8'), digestmod='sha256'
