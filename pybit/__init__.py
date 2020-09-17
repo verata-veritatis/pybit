@@ -25,7 +25,7 @@ import websocket
 
 from concurrent.futures import ThreadPoolExecutor
 
-from .exceptions import InvalidRequestError
+from .exceptions import FailedRequestError, InvalidRequestError
 
 VERSION = '1.1.1'
 
@@ -1269,7 +1269,7 @@ class HTTP:
         try:
             s_json = s.json()
         except json.decoder.JSONDecodeError:
-            raise InvalidRequestError(
+            raise FailedRequestError(
                 f'{s.reason} ({s.status_code})'
             )
 
@@ -1426,7 +1426,7 @@ class WebSocket:
         """
 
         self.ws.close()
-        while self.ws.sock.connected:
+        while self.ws.sock:
             continue
         self.exited = True
 
