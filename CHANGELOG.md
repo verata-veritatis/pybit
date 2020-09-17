@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Added `FailedRequestError` to differentiate between failed requests and
   invalid requests.
-- Fixed `exit` method on `WebSocket` to now properly handling closing of the socket.
+- Fixed `exit` method on `WebSocket` to now properly handle the closing of the socket.
 
 ## [1.1.3] - 2020-09-12
 
