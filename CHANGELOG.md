@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Modified
 
-- Added `FailedExceptionError` to differentiate between failed requests and
+- Added `FailedRequestError` to differentiate between failed requests and
   invalid requests.
 - Fixed `exit` method on `WebSocket` to now properly handling closing of the socket.
 
