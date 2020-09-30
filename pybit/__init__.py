@@ -27,7 +27,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 from .exceptions import FailedRequestError, InvalidRequestError
 
-VERSION = '1.1.4'
+VERSION = '1.1.5'
 
 
 class HTTP:
@@ -61,6 +61,9 @@ class HTTP:
     :param force_retry: Whether or not pybit should retry a timed-out request.
     :type force_retry: bool
 
+    :param max_retries: The number of times to re-attempt a request.
+    :type max_retries: int
+
     :param referral_id: An optional referer ID can be added to each request for
         identification.
     :type referral_id: str
@@ -71,7 +74,7 @@ class HTTP:
 
     def __init__(self, endpoint, api_key=None, api_secret=None,
                  logging_level=logging.INFO, log_requests=False,
-                 request_timeout=10, force_retry=False,
+                 request_timeout=10, force_retry=False, max_retries=3,
                  referral_id=None):
         """Initializes the HTTP class."""
 
@@ -95,6 +98,7 @@ class HTTP:
         # Set timeout.
         self.timeout = request_timeout
         self.force_retry = force_retry
+        self.max_retries = max_retries
 
         # Initialize requests session.
         self.client = requests.Session()
@@ -1254,32 +1258,47 @@ class HTTP:
             )
 
         # Send request and return headers with body. Retry if failed.
+        retries_attempted = self.max_retries
+
         while True:
+
+            retries_attempted -= 1
+            if retries_attempted < 0:
+                raise FailedRequestError('Retries exceeded maximum.')
+
+            retries_remaining = f'{retries_attempted} retries remain.'
+
             try:
                 s = self.client.send(r, timeout=self.timeout)
-                break
             except requests.exceptions.ReadTimeout as e:
-                self.logger.error(e)
                 if self.force_retry:
+                    self.logger.error(f'{e}. {retries_remaining}')
                     continue
                 else:
-                    return None
+                    raise e
 
-        # Convert response to dictionary, or raise if requests error.
-        try:
-            s_json = s.json()
-        except json.decoder.JSONDecodeError:
-            raise FailedRequestError(
-                f'{s.reason} ({s.status_code})'
-            )
+            # Convert response to dictionary, or raise if requests error.
+            try:
+                s_json = s.json()
+            except json.decoder.JSONDecodeError as e:
+                if self.force_retry:
+                    self.logger.error(f'{e}. {retries_remaining}')
+                    continue
+                else:
+                    raise FailedRequestError(
+                        f'{s.reason} ({s.status_code})'
+                    )
 
-        # If Bybit returns an error, raise.
-        if s_json['ret_code']:
-            raise InvalidRequestError(
-                f'{s_json["ret_msg"]} ({s_json["ret_code"]})'
-            )
-        else:
-            return s_json
+            # If Bybit returns an error, raise.
+            if s_json['ret_code']:
+                error_msg = f'{s_json["ret_msg"]} ({s_json["ret_code"]})'
+                if self.force_retry:
+                    self.logger.error(f'{error_msg}. {retries_remaining}')
+                    continue
+                else:
+                    raise InvalidRequestError(error_msg)
+            else:
+                return s_json
 
 
 class WebSocket:
