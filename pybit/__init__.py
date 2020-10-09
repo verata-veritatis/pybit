@@ -58,6 +58,10 @@ class HTTP:
         to 10 seconds.
     :type request_timeout: int
 
+    :param recv_window: How long an HTTP request is valid in ms. Default is
+        5000.
+    :type recv_window: int
+
     :param force_retry: Whether or not pybit should retry a timed-out request.
     :type force_retry: bool
 
@@ -74,8 +78,8 @@ class HTTP:
 
     def __init__(self, endpoint, api_key=None, api_secret=None,
                  logging_level=logging.INFO, log_requests=False,
-                 request_timeout=10, force_retry=False, max_retries=3,
-                 referral_id=None):
+                 request_timeout=10, recv_window=5000, force_retry=False,
+                 max_retries=3, referral_id=None):
         """Initializes the HTTP class."""
 
         # Set the endpoint.
@@ -97,6 +101,7 @@ class HTTP:
 
         # Set timeout.
         self.timeout = request_timeout
+        self.recv_window = recv_window
         self.force_retry = force_retry
         self.max_retries = max_retries
 
@@ -1165,8 +1170,7 @@ class HTTP:
     https://bybit-exchange.github.io/docs/inverse/#t-authentication.
     '''
 
-    @staticmethod
-    def _auth(method, params, api_key, api_secret):
+    def _auth(self, method, params):
         """
         Generates authentication signature per Bybit API specifications.
 
@@ -1178,11 +1182,15 @@ class HTTP:
 
         """
 
+        api_key = self.api_key
+        api_secret = self.api_secret
+
         if api_key is None or api_secret is None:
             raise PermissionError('Authenticated endpoints require keys.')
 
         # Append required parameters.
         params['api_key'] = api_key
+        params['recv_window'] = self.recv_window
         params['timestamp'] = int(time.time() * 10 ** 3)
 
         # Sort dictionary alphabetically to create querystring.
@@ -1226,8 +1234,6 @@ class HTTP:
             signature = self._auth(
                 method=method,
                 params=query,
-                api_key=self.api_key,
-                api_secret=self.api_secret
             )
 
             # Sort the dictionary alphabetically.
