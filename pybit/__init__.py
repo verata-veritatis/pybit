@@ -27,7 +27,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 from .exceptions import FailedRequestError, InvalidRequestError
 
-VERSION = '1.1.6'
+VERSION = '1.1.7rc'
 
 
 class HTTP:
@@ -1170,7 +1170,7 @@ class HTTP:
     https://bybit-exchange.github.io/docs/inverse/#t-authentication.
     '''
 
-    def _auth(self, method, params):
+    def _auth(self, method, params, recv_window):
         """
         Generates authentication signature per Bybit API specifications.
 
@@ -1190,7 +1190,7 @@ class HTTP:
 
         # Append required parameters.
         params['api_key'] = api_key
-        params['recv_window'] = self.recv_window
+        params['recv_window'] = recv_window
         params['timestamp'] = int(time.time() * 10 ** 3)
 
         # Sort dictionary alphabetically to create querystring.
@@ -1221,47 +1221,14 @@ class HTTP:
 
         """
 
+        # Store original recv_window.
+        recv_window = self.recv_window
+
         # Bug fix: change floating whole numbers to integers to prevent
         # auth signature errors.
         for i in query.keys():
             if isinstance(query[i], float) and query[i] == int(query[i]):
                 query[i] = int(query[i])
-
-        # Authenticate if we are using a private endpoint.
-        if auth:
-
-            # Prepare signature.
-            signature = self._auth(
-                method=method,
-                params=query,
-            )
-
-            # Sort the dictionary alphabetically.
-            query = dict(sorted(query.items(), key=lambda x: x))
-
-            # Append the signature to the dictionary.
-            query['sign'] = signature
-
-        # Define parameters and log the request.
-        if query is not None:
-            req_params = {k: v for k, v in query.items() if
-                          v is not None}
-        else:
-            req_params = {}
-
-        # Log the request.
-        if self.log_requests:
-            self.logger.info(f'Request -> {method} {path}: {req_params}')
-
-        # Prepare request; use 'params' for GET and 'data' for POST.
-        if method == 'GET':
-            r = self.client.prepare_request(
-                requests.Request(method, path, params=req_params)
-            )
-        else:
-            r = self.client.prepare_request(
-                requests.Request(method, path, data=json.dumps(req_params))
-            )
 
         # Send request and return headers with body. Retry if failed.
         retries_attempted = self.max_retries
@@ -1273,6 +1240,43 @@ class HTTP:
                 raise FailedRequestError('Retries exceeded maximum.')
 
             retries_remaining = f'{retries_attempted} retries remain.'
+
+            # Authenticate if we are using a private endpoint.
+            if auth:
+
+                # Prepare signature.
+                signature = self._auth(
+                    method=method,
+                    params=query,
+                    recv_window=recv_window,
+                )
+
+                # Sort the dictionary alphabetically.
+                query = dict(sorted(query.items(), key=lambda x: x))
+
+                # Append the signature to the dictionary.
+                query['sign'] = signature
+
+            # Define parameters and log the request.
+            if query is not None:
+                req_params = {k: v for k, v in query.items() if
+                              v is not None}
+            else:
+                req_params = {}
+
+            # Log the request.
+            if self.log_requests:
+                self.logger.info(f'Request -> {method} {path}: {req_params}')
+
+            # Prepare request; use 'params' for GET and 'data' for POST.
+            if method == 'GET':
+                r = self.client.prepare_request(
+                    requests.Request(method, path, params=req_params)
+                )
+            else:
+                r = self.client.prepare_request(
+                    requests.Request(method, path, data=json.dumps(req_params))
+                )
 
             try:
                 s = self.client.send(r, timeout=self.timeout)
@@ -1299,6 +1303,10 @@ class HTTP:
             if s_json['ret_code']:
                 error_msg = f'{s_json["ret_msg"]} ({s_json["ret_code"]})'
                 if self.force_retry:
+                    # If recv_window error, add 2.5 seconds and retry.
+                    if s_json['ret_code'] == 10002:
+                        error_msg += '. Added 2.5 seconds to recv_window'
+                        recv_window += 2500
                     self.logger.error(f'{error_msg}. {retries_remaining}')
                     continue
                 else:
