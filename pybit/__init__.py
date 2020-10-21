@@ -27,7 +27,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 from .exceptions import FailedRequestError, InvalidRequestError
 
-VERSION = '1.1.7rc'
+VERSION = '1.1.7'
 
 
 class HTTP:
@@ -1280,7 +1280,10 @@ class HTTP:
 
             try:
                 s = self.client.send(r, timeout=self.timeout)
-            except requests.exceptions.ReadTimeout as e:
+            except (
+                requests.exceptions.ReadTimeout,
+                requests.exceptions.SSLError
+            ) as e:
                 if self.force_retry:
                     self.logger.error(f'{e}. {retries_remaining}')
                     continue

@@ -5,11 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.1.7rc] - 2020-10-09
+## [1.1.7] - 2020-10-21
 
 ### Added
 
 - Added `recv_window` error handler to `HTTP` `auth` method.
+- Will now catch and handle `requests.exceptions.SSLError`.
 
 ## [1.1.6] - 2020-10-09
 
