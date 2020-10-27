@@ -27,7 +27,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 from .exceptions import FailedRequestError, InvalidRequestError
 
-VERSION = '1.1.8rc0'
+VERSION = '1.1.8rc1'
 
 
 class HTTP:
@@ -1300,7 +1300,8 @@ class HTTP:
                     continue
                 else:
                     raise FailedRequestError(
-                        f'{s.reason} ({s.status_code})'
+                        message=s.reason,
+                        status_code=s.status_code
                     )
 
             # If Bybit returns an error, raise.
@@ -1314,7 +1315,10 @@ class HTTP:
                     self.logger.error(f'{error_msg}. {retries_remaining}')
                     continue
                 else:
-                    raise InvalidRequestError(error_msg)
+                    raise InvalidRequestError(
+                        message=s_json["ret_msg"],
+                        status_code=s_json["ret_code"]
+                    )
             else:
                 return s_json
 
