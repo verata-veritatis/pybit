@@ -27,7 +27,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 from .exceptions import FailedRequestError, InvalidRequestError
 
-VERSION = '1.1.8rc1'
+VERSION = '1.1.8rc2'
 
 
 class HTTP:
@@ -68,6 +68,10 @@ class HTTP:
     :param max_retries: The number of times to re-attempt a request.
     :type max_retries: int
 
+    :param referral_id: Bybit error codes to NOT attempt retries if force retry
+        is True. Given as a tuple of error codes.
+    :type referral_id: tuple
+
     :param referral_id: An optional referer ID can be added to each request for
         identification.
     :type referral_id: str
@@ -79,7 +83,7 @@ class HTTP:
     def __init__(self, endpoint, api_key=None, api_secret=None,
                  logging_level=logging.INFO, log_requests=False,
                  request_timeout=10, recv_window=5000, force_retry=False,
-                 max_retries=3, referral_id=None):
+                 max_retries=3, ignore_retries_for=None, referral_id=None):
         """Initializes the HTTP class."""
 
         # Set the endpoint.
@@ -104,6 +108,7 @@ class HTTP:
         self.recv_window = recv_window
         self.force_retry = force_retry
         self.max_retries = max_retries
+        self.ignore_retries_for = ignore_retries_for
 
         # Initialize requests session.
         self.client = requests.Session()
@@ -1278,8 +1283,11 @@ class HTTP:
                     requests.Request(method, path, data=json.dumps(req_params))
                 )
 
+            # Attempt the request.
             try:
                 s = self.client.send(r, timeout=self.timeout)
+
+            # If requests fires an error, retry.
             except (
                 requests.exceptions.ReadTimeout,
                 requests.exceptions.SSLError,
@@ -1294,6 +1302,8 @@ class HTTP:
             # Convert response to dictionary, or raise if requests error.
             try:
                 s_json = s.json()
+
+            # If we have trouble converting, handle the error and retry.
             except json.decoder.JSONDecodeError as e:
                 if self.force_retry:
                     self.logger.error(f'{e}. {retries_remaining}')
@@ -1306,14 +1316,23 @@ class HTTP:
 
             # If Bybit returns an error, raise.
             if s_json['ret_code']:
+
+                # Generate error message.
                 error_msg = f'{s_json["ret_msg"]} ({s_json["ret_code"]})'
-                if self.force_retry:
+
+                # If we're supposed to retry UNLESS we're ignoring this error.
+                if self.force_retry and not \
+                        s_json['ret_code'] in self.ignore_retries_for:
+
                     # If recv_window error, add 2.5 seconds and retry.
                     if s_json['ret_code'] == 10002:
                         error_msg += '. Added 2.5 seconds to recv_window'
                         recv_window += 2500
+
+                    # Log the error.
                     self.logger.error(f'{error_msg}. {retries_remaining}')
                     continue
+
                 else:
                     raise InvalidRequestError(
                         message=s_json["ret_msg"],
