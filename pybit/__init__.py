@@ -27,7 +27,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 from .exceptions import FailedRequestError, InvalidRequestError
 
-VERSION = '1.1.8rc2'
+VERSION = '1.1.8rc3'
 
 
 class HTTP:
@@ -68,9 +68,9 @@ class HTTP:
     :param max_retries: The number of times to re-attempt a request.
     :type max_retries: int
 
-    :param referral_id: Bybit error codes to NOT attempt retries if force retry
-        is True. Given as a tuple of error codes.
-    :type referral_id: tuple
+    :param ignore_retries_for: Bybit error codes to NOT attempt retries if force
+        retry is True. Given as a tuple of error codes.
+    :type ignore_retries_for: tuple
 
     :param referral_id: An optional referer ID can be added to each request for
         identification.
@@ -83,7 +83,7 @@ class HTTP:
     def __init__(self, endpoint, api_key=None, api_secret=None,
                  logging_level=logging.INFO, log_requests=False,
                  request_timeout=10, recv_window=5000, force_retry=False,
-                 max_retries=3, ignore_retries_for=None, referral_id=None):
+                 max_retries=3, ignore_retries_for=(), referral_id=None):
         """Initializes the HTTP class."""
 
         # Set the endpoint.

@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.8rc3] - 2020-11-12
+
+### Modified
+
+- Changed `ignore_retries_for` default argument to be empty tuple to prevent error.
+
 ## [1.1.8rc2] - 2020-10-27
 
 ### Added
