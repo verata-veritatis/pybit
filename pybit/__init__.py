@@ -1243,7 +1243,10 @@ class HTTP:
 
             retries_attempted -= 1
             if retries_attempted < 0:
-                raise FailedRequestError('Retries exceeded maximum.')
+                raise FailedRequestError(
+                    message='Bad Request. Retries exceeded maximum.',
+                    status_code=400
+                )
 
             retries_remaining = f'{retries_attempted} retries remain.'
 
@@ -1311,8 +1314,8 @@ class HTTP:
                     continue
                 else:
                     raise FailedRequestError(
-                        message=s.reason,
-                        status_code=s.status_code
+                        message='Conflict. Could not decode JSON.',
+                        status_code=409
                     )
 
             # If Bybit returns an error, raise.
