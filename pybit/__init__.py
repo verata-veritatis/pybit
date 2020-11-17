@@ -1616,7 +1616,7 @@ class WebSocket:
 
                 # Record the initial snapshot.
                 if 'snapshot' in msg_json['type']:
-                    self.data[topic] = msg_json['data']
+                    self.data[topic] = msg_json['data']['order_book']
 
                 if 'delta' in msg_json['type']:
 
