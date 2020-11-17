@@ -1131,43 +1131,31 @@ class HTTP:
         """
 
         # First we fetch the user's position.
-        r = self._submit_request(
-            method='GET',
-            path=self.endpoint + '/v2/private/position/list',
-            query={'symbol': symbol},
-            auth=True
-        )
-
-        # Next we detect the position size and side.
         try:
-            position = r['result']['size']
-            side = 'Buy' if r['result']['side'] == 'Sell' else 'Sell'
-            if position == 0:
-                return self.logger.error('No position detected.')
+            r = self.my_position(symbol=symbol)['result']
 
         # If there is no returned position, we want to handle that.
-        except IndexError:
+        except KeyError:
             return self.logger.error('No position detected.')
 
-        # We should know if we're pinging the inverse or linear perp API.
-        if symbol.endswith('USDT'):
-            close_path = self.endpoint + '/private/linear/order/create'
-        else:
-            close_path = self.endpoint + '/v2/private/order/create'
-
-        # Submit a market order against your position for the same qty.
-        return self._submit_request(
-            method='POST',
-            path=close_path,
-            query={
+        # Next we generate a list of market orders
+        orders = [
+            {
                 'symbol': symbol,
                 'order_type': 'Market',
-                'side': side,
-                'qty': position,
-                'time_in_force': 'ImmediateOrCancel'
-            },
-            auth=True
-        )
+                'side': 'Buy' if p['side'] == 'Sell' else 'Sell',
+                'qty': p['size'],
+                'time_in_force': 'ImmediateOrCancel',
+                'reduce_only': True,
+                'close_on_trigger': True
+            } for p in (r if isinstance(r, list) else [r]) if p['size'] > 0
+        ]
+
+        if len(orders) == 0:
+            return self.logger.error('No position detected.')
+
+        # Submit a market order against each open position for the same qty.
+        return self.place_active_order_bulk(orders)
 
     '''
     Internal methods; signature and request submission.
