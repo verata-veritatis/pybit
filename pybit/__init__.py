@@ -1231,9 +1231,10 @@ class HTTP:
 
         # Bug fix: change floating whole numbers to integers to prevent
         # auth signature errors.
-        for i in query.keys():
-            if isinstance(query[i], float) and query[i] == int(query[i]):
-                query[i] = int(query[i])
+        if query is not None:
+            for i in query.keys():
+                if isinstance(query[i], float) and query[i] == int(query[i]):
+                    query[i] = int(query[i])
 
         # Send request and return headers with body. Retry if failed.
         retries_attempted = self.max_retries
