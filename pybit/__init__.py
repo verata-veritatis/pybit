@@ -1673,8 +1673,19 @@ class WebSocket:
             elif 'position' in topic:
 
                 # Record incoming position data.
-                data = msg_json['data'][0]
-                self.data[topic][msg_json['data'][0]['symbol']] = data
+                for p in msg_json['data']:
+
+                    # linear (USDT) positions have Buy|Sell side and
+                    # updates contain all USDT positions
+                    if p['side'] != 'None':
+                        try:
+                            self.data[topic][p['symbol']][p['side']] = p
+                        except KeyError:
+                            self.data[topic][p['symbol']] = {p['side']: p}
+
+                    # non-linear positions
+                    else:
+                        self.data[topic][p['symbol']] = p
 
     def _on_error(self, error):
         """
