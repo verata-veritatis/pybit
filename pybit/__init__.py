@@ -1580,34 +1580,32 @@ class WebSocket:
         # Load dict of message.
         msg_json = json.loads(message)
 
-        # If 'success' exists and is True.
-        if 'success' in msg_json and msg_json['success']:
+        # If 'success' exists
+        if 'success' in msg_json:
+            if msg_json['success']:
+                
+                # If 'request' exists.
+                if 'request' in msg_json:
 
-            # If 'request' exists.
-            if 'request' in msg_json:
+                    # If we get succesful auth, notify user.
+                    if msg_json['request']['op'] == 'auth':
+                        self.logger.info('Authorization successful.')
+                        self.auth = True
 
-                # If we get succesful auth, notify user.
-                if msg_json['request']['op'] == 'auth':
-                    self.logger.info('Authorization successful.')
-                    self.auth = True
+                    # If we get successful subscription, notify user.
+                    if msg_json['request']['op'] == 'subscribe':
+                        sub = msg_json['request']['args']
+                        self.logger.info(f'Subscription to {sub} successful.')
+            else:
+                response = msg_json['ret_msg']
+                if 'unknown topic' in response:
+                    self.logger.error('Couldn\'t subscribe to topic.'
+                                      f' Error: {response}.')
 
-                # If we get successful subscription, notify user.
-                if msg_json['request']['op'] == 'subscribe':
-                    sub = msg_json['request']['args']
-                    self.logger.info(f'Subscription to {sub} successful.')
-
-        # If 'success' exists but is False.
-        elif 'success' in msg_json and not msg_json['success']:
-
-            response = msg_json['ret_msg']
-            if 'unknown topic' in response:
-                self.logger.error('Couldn\'t subscribe to topic.'
-                                  f' Error: {response}.')
-
-            # If we get unsuccesful auth, notify user.
-            elif msg_json['request']['op'] == 'auth':
-                self.logger.info('Authorization failed. Please check your '
-                                 'API keys and restart.')
+                # If we get unsuccesful auth, notify user.
+                elif msg_json['request']['op'] == 'auth':
+                    self.logger.info('Authorization failed. Please check your '
+                                     'API keys and restart.')
 
         elif 'topic' in msg_json:
 
@@ -1652,7 +1650,7 @@ class WebSocket:
                 if len(self.data[topic]) > self.max_length:
                     self.data[topic].pop(0)
 
-            # If incoming 'instrument_info', 'klineV2', or 'wallet' data.
+            # If incoming 'insurance', 'klineV2', or 'wallet' data.
             elif any(i in topic for i in ['insurance', 'klineV2', 'wallet']):
 
                 # Record incoming data.
