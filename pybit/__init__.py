@@ -351,7 +351,7 @@ class HTTP:
         if 'symbol' in kwargs and 'USDT' in kwargs['symbol']:
             suffix = '/private/linear/order/list'
         else:
-            suffix = '/open-api/order/list'
+            suffix = '/v2/private/order/list'
 
         return self._submit_request(
             method='GET',
@@ -438,7 +438,7 @@ class HTTP:
         if 'symbol' in kwargs and 'USDT' in kwargs['symbol']:
             suffix = '/private/linear/order/replace'
         else:
-            suffix = '/open-api/order/replace'
+            suffix = '/v2/private/order/replace'
 
         return self._submit_request(
             method='POST',
@@ -503,7 +503,7 @@ class HTTP:
         if 'symbol' in kwargs and 'USDT' in kwargs['symbol']:
             suffix = '/private/linear/stop-order/create'
         else:
-            suffix = '/open-api/stop-order/create'
+            suffix = '/v2/private/stop-order/create'
 
         return self._submit_request(
             method='POST',
@@ -547,7 +547,7 @@ class HTTP:
         if 'symbol' in kwargs and 'USDT' in kwargs['symbol']:
             suffix = '/private/linear/stop-order/list'
         else:
-            suffix = '/open-api/stop-order/list'
+            suffix = '/v2/private/stop-order/list'
 
         return self._submit_request(
             method='GET',
@@ -569,7 +569,7 @@ class HTTP:
         if 'symbol' in kwargs and 'USDT' in kwargs['symbol']:
             suffix = '/private/linear/stop-order/cancel'
         else:
-            suffix = '/open-api/stop-order/cancel'
+            suffix = '/v2/private/stop-order/cancel'
 
         return self._submit_request(
             method='POST',
@@ -634,7 +634,7 @@ class HTTP:
         if 'symbol' in kwargs and 'USDT' in kwargs['symbol']:
             suffix = '/private/linear/stop-order/replace'
         else:
-            suffix = '/open-api/stop-order/replace'
+            suffix = '/v2/private/stop-order/replace'
 
         return self._submit_request(
             method='POST',
@@ -818,6 +818,8 @@ class HTTP:
             https://bybit-exchange.github.io/docs/inverse/#t-getleverage.
         :returns: Request results as dictionary.
         """
+
+        self.logger.warn('This endpoint is deprecated and will be removed. Use my_position()')
 
         return self._submit_request(
             method='GET',
