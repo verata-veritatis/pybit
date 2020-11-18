@@ -27,7 +27,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 from .exceptions import FailedRequestError, InvalidRequestError
 
-VERSION = '1.1.8rc3'
+VERSION = '1.1.8rc4'
 
 
 class HTTP:
@@ -1465,7 +1465,10 @@ class WebSocket:
             self.data[topic] = []
             return data
         else:
-            return self.data[topic]
+            try:
+                return self.data[topic].copy()
+            except KeyError:
+                return []
 
     def ping(self):
         """
@@ -1546,6 +1549,10 @@ class WebSocket:
         if self.api_key and self.api_secret:
             self._auth()
 
+        # Check if subscriptions is a list.
+        if isinstance(self.subscriptions, str):
+            self.subscriptions = [self.subscriptions]
+
         # Subscribe to the requested topics.
         self.ws.send(
             json.dumps({
@@ -1578,7 +1585,7 @@ class WebSocket:
         # If 'success' exists
         if 'success' in msg_json:
             if msg_json['success']:
-                
+
                 # If 'request' exists.
                 if 'request' in msg_json:
 
@@ -1646,7 +1653,8 @@ class WebSocket:
                     self.data[topic].pop(0)
 
             # If incoming 'insurance', 'klineV2', or 'wallet' data.
-            elif any(i in topic for i in ['insurance', 'klineV2', 'wallet']):
+            elif any(i in topic for i in ['insurance', 'klineV2', 'wallet',
+                                          'candle']):
 
                 # Record incoming data.
                 self.data[topic] = msg_json['data'][0]
