@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated `WebSocket` class to properly handle `candle` from USDT perpetual streams.
 - Updated `WebSocket` class to return a copy of the collected data, preventing establishing
   a reference.
+- Updated `WebSocket` class to properly handle linear (USDT) orderbook data.
+- Performance improvements.
 
 ## [1.1.8rc3] - 2020-11-12
 
