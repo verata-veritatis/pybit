@@ -351,7 +351,7 @@ class HTTP:
         if 'symbol' in kwargs and 'USDT' in kwargs['symbol']:
             suffix = '/private/linear/order/list'
         else:
-            suffix = '/open-api/order/list'
+            suffix = '/v2/private/order/list'
 
         return self._submit_request(
             method='GET',
@@ -438,7 +438,7 @@ class HTTP:
         if 'symbol' in kwargs and 'USDT' in kwargs['symbol']:
             suffix = '/private/linear/order/replace'
         else:
-            suffix = '/open-api/order/replace'
+            suffix = '/v2/private/order/replace'
 
         return self._submit_request(
             method='POST',
@@ -503,7 +503,7 @@ class HTTP:
         if 'symbol' in kwargs and 'USDT' in kwargs['symbol']:
             suffix = '/private/linear/stop-order/create'
         else:
-            suffix = '/open-api/stop-order/create'
+            suffix = '/v2/private/stop-order/create'
 
         return self._submit_request(
             method='POST',
@@ -547,7 +547,7 @@ class HTTP:
         if 'symbol' in kwargs and 'USDT' in kwargs['symbol']:
             suffix = '/private/linear/stop-order/list'
         else:
-            suffix = '/open-api/stop-order/list'
+            suffix = '/v2/private/stop-order/list'
 
         return self._submit_request(
             method='GET',
@@ -569,7 +569,7 @@ class HTTP:
         if 'symbol' in kwargs and 'USDT' in kwargs['symbol']:
             suffix = '/private/linear/stop-order/cancel'
         else:
-            suffix = '/open-api/stop-order/cancel'
+            suffix = '/v2/private/stop-order/cancel'
 
         return self._submit_request(
             method='POST',
@@ -634,7 +634,7 @@ class HTTP:
         if 'symbol' in kwargs and 'USDT' in kwargs['symbol']:
             suffix = '/private/linear/stop-order/replace'
         else:
-            suffix = '/open-api/stop-order/replace'
+            suffix = '/v2/private/stop-order/replace'
 
         return self._submit_request(
             method='POST',
@@ -818,6 +818,8 @@ class HTTP:
             https://bybit-exchange.github.io/docs/inverse/#t-getleverage.
         :returns: Request results as dictionary.
         """
+
+        self.logger.warn('This endpoint is deprecated and will be removed. Use my_position()')
 
         return self._submit_request(
             method='GET',
@@ -1131,43 +1133,31 @@ class HTTP:
         """
 
         # First we fetch the user's position.
-        r = self._submit_request(
-            method='GET',
-            path=self.endpoint + '/v2/private/position/list',
-            query={'symbol': symbol},
-            auth=True
-        )
-
-        # Next we detect the position size and side.
         try:
-            position = r['result']['size']
-            side = 'Buy' if r['result']['side'] == 'Sell' else 'Sell'
-            if position == 0:
-                return self.logger.error('No position detected.')
+            r = self.my_position(symbol=symbol)['result']
 
         # If there is no returned position, we want to handle that.
-        except IndexError:
+        except KeyError:
             return self.logger.error('No position detected.')
 
-        # We should know if we're pinging the inverse or linear perp API.
-        if symbol.endswith('USDT'):
-            close_path = self.endpoint + '/private/linear/order/create'
-        else:
-            close_path = self.endpoint + '/v2/private/order/create'
-
-        # Submit a market order against your position for the same qty.
-        return self._submit_request(
-            method='POST',
-            path=close_path,
-            query={
+        # Next we generate a list of market orders
+        orders = [
+            {
                 'symbol': symbol,
                 'order_type': 'Market',
-                'side': side,
-                'qty': position,
-                'time_in_force': 'ImmediateOrCancel'
-            },
-            auth=True
-        )
+                'side': 'Buy' if p['side'] == 'Sell' else 'Sell',
+                'qty': p['size'],
+                'time_in_force': 'ImmediateOrCancel',
+                'reduce_only': True,
+                'close_on_trigger': True
+            } for p in (r if isinstance(r, list) else [r]) if p['size'] > 0
+        ]
+
+        if len(orders) == 0:
+            return self.logger.error('No position detected.')
+
+        # Submit a market order against each open position for the same qty.
+        return self.place_active_order_bulk(orders)
 
     '''
     Internal methods; signature and request submission.
@@ -1231,9 +1221,10 @@ class HTTP:
 
         # Bug fix: change floating whole numbers to integers to prevent
         # auth signature errors.
-        for i in query.keys():
-            if isinstance(query[i], float) and query[i] == int(query[i]):
-                query[i] = int(query[i])
+        if query is not None:
+            for i in query.keys():
+                if isinstance(query[i], float) and query[i] == int(query[i]):
+                    query[i] = int(query[i])
 
         # Send request and return headers with body. Retry if failed.
         retries_attempted = self.max_retries
@@ -1580,34 +1571,32 @@ class WebSocket:
         # Load dict of message.
         msg_json = json.loads(message)
 
-        # If 'success' exists and is True.
-        if 'success' in msg_json and msg_json['success']:
+        # If 'success' exists
+        if 'success' in msg_json:
+            if msg_json['success']:
+                
+                # If 'request' exists.
+                if 'request' in msg_json:
 
-            # If 'request' exists.
-            if 'request' in msg_json:
+                    # If we get succesful auth, notify user.
+                    if msg_json['request']['op'] == 'auth':
+                        self.logger.info('Authorization successful.')
+                        self.auth = True
 
-                # If we get succesful auth, notify user.
-                if msg_json['request']['op'] == 'auth':
-                    self.logger.info('Authorization successful.')
-                    self.auth = True
+                    # If we get successful subscription, notify user.
+                    if msg_json['request']['op'] == 'subscribe':
+                        sub = msg_json['request']['args']
+                        self.logger.info(f'Subscription to {sub} successful.')
+            else:
+                response = msg_json['ret_msg']
+                if 'unknown topic' in response:
+                    self.logger.error('Couldn\'t subscribe to topic.'
+                                      f' Error: {response}.')
 
-                # If we get successful subscription, notify user.
-                if msg_json['request']['op'] == 'subscribe':
-                    sub = msg_json['request']['args']
-                    self.logger.info(f'Subscription to {sub} successful.')
-
-        # If 'success' exists but is False.
-        elif 'success' in msg_json and not msg_json['success']:
-
-            response = msg_json['ret_msg']
-            if 'unknown topic' in response:
-                self.logger.error('Couldn\'t subscribe to topic.'
-                                  f' Error: {response}.')
-
-            # If we get unsuccesful auth, notify user.
-            elif msg_json['request']['op'] == 'auth':
-                self.logger.info('Authorization failed. Please check your '
-                                 'API keys and restart.')
+                # If we get unsuccesful auth, notify user.
+                elif msg_json['request']['op'] == 'auth':
+                    self.logger.info('Authorization failed. Please check your '
+                                     'API keys and restart.')
 
         elif 'topic' in msg_json:
 
@@ -1618,7 +1607,7 @@ class WebSocket:
 
                 # Record the initial snapshot.
                 if 'snapshot' in msg_json['type']:
-                    self.data[topic] = msg_json['data']
+                    self.data[topic] = msg_json['data']['order_book']
 
                 if 'delta' in msg_json['type']:
 
@@ -1652,7 +1641,7 @@ class WebSocket:
                 if len(self.data[topic]) > self.max_length:
                     self.data[topic].pop(0)
 
-            # If incoming 'instrument_info', 'klineV2', or 'wallet' data.
+            # If incoming 'insurance', 'klineV2', or 'wallet' data.
             elif any(i in topic for i in ['insurance', 'klineV2', 'wallet']):
 
                 # Record incoming data.
@@ -1674,8 +1663,19 @@ class WebSocket:
             elif 'position' in topic:
 
                 # Record incoming position data.
-                data = msg_json['data'][0]
-                self.data[topic][msg_json['data'][0]['symbol']] = data
+                for p in msg_json['data']:
+
+                    # linear (USDT) positions have Buy|Sell side and
+                    # updates contain all USDT positions
+                    if p['side'] != 'None':
+                        try:
+                            self.data[topic][p['symbol']][p['side']] = p
+                        except KeyError:
+                            self.data[topic][p['symbol']] = {p['side']: p}
+
+                    # non-linear positions
+                    else:
+                        self.data[topic][p['symbol']] = p
 
     def _on_error(self, error):
         """
