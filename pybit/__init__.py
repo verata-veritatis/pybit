@@ -27,7 +27,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 from .exceptions import FailedRequestError, InvalidRequestError
 
-VERSION = '1.1.8rc4'
+VERSION = '1.1.8'
 
 
 class HTTP:
