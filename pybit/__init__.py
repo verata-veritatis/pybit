@@ -27,7 +27,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 from .exceptions import FailedRequestError, InvalidRequestError
 
-VERSION = '1.1.8rc3'
+VERSION = '1.1.8'
 
 
 class HTTP:
@@ -812,7 +812,8 @@ class HTTP:
 
     def user_leverage(self, **kwargs):
         """
-        Get user leverage.
+        ABANDONED! Please use my_position instead. Fetches user leverage by
+        fetching user position.
 
         :param kwargs: See
             https://bybit-exchange.github.io/docs/inverse/#t-getleverage.
@@ -823,7 +824,7 @@ class HTTP:
 
         return self._submit_request(
             method='GET',
-            path=self.endpoint + '/user/leverage',
+            path=self.endpoint + '/v2/private/position/list',
             query=kwargs,
             auth=True
         )
@@ -1233,7 +1234,10 @@ class HTTP:
 
             retries_attempted -= 1
             if retries_attempted < 0:
-                raise FailedRequestError('Retries exceeded maximum.')
+                raise FailedRequestError(
+                    message='Bad Request. Retries exceeded maximum.',
+                    status_code=400
+                )
 
             retries_remaining = f'{retries_attempted} retries remain.'
 
@@ -1301,8 +1305,8 @@ class HTTP:
                     continue
                 else:
                     raise FailedRequestError(
-                        message=s.reason,
-                        status_code=s.status_code
+                        message='Conflict. Could not decode JSON.',
+                        status_code=409
                     )
 
             # If Bybit returns an error, raise.
@@ -1461,7 +1465,10 @@ class WebSocket:
             self.data[topic] = []
             return data
         else:
-            return self.data[topic]
+            try:
+                return self.data[topic].copy()
+            except KeyError:
+                return []
 
     def ping(self):
         """
@@ -1542,6 +1549,10 @@ class WebSocket:
         if self.api_key and self.api_secret:
             self._auth()
 
+        # Check if subscriptions is a list.
+        if isinstance(self.subscriptions, str):
+            self.subscriptions = [self.subscriptions]
+
         # Subscribe to the requested topics.
         self.ws.send(
             json.dumps({
@@ -1574,7 +1585,7 @@ class WebSocket:
         # If 'success' exists
         if 'success' in msg_json:
             if msg_json['success']:
-                
+
                 # If 'request' exists.
                 if 'request' in msg_json:
 
@@ -1642,7 +1653,8 @@ class WebSocket:
                     self.data[topic].pop(0)
 
             # If incoming 'insurance', 'klineV2', or 'wallet' data.
-            elif any(i in topic for i in ['insurance', 'klineV2', 'wallet']):
+            elif any(i in topic for i in ['insurance', 'klineV2', 'wallet',
+                                          'candle']):
 
                 # Record incoming data.
                 self.data[topic] = msg_json['data'][0]

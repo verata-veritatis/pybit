@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.8] - 2020-11-21
+
+- See release candidates for details.
+
+## [1.1.8rc4] - 2020-11-14
+
+### Modified
+
+- Fixed raise error missing argument for `FailedRequestError` upon max retries.
+- Modified API endpoints to saistfy requirements for upcoming endpoint deprecation,
+  see the [API Documentation](https://bybit-exchange.github.io/docs/inverse/#t-introduction)
+  for more info.
+- Updated `WebSocket` class to properly handle `candle` from USDT perpetual streams.
+- Updated `WebSocket` class to return a copy of the collected data, preventing establishing
+  a reference.
+- Updated `WebSocket` class to properly handle linear (USDT) orderbook data.
+- Performance improvements.
+
 ## [1.1.8rc3] - 2020-11-12
 
 ### Modified
