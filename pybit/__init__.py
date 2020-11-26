@@ -1646,7 +1646,7 @@ class WebSocket:
                     for i in msg_json['data']:
                         self.data[topic].append(i)
                 except AttributeError:
-                    self.data[topic] = [msg_json['data']]
+                    self.data[topic] = msg_json['data']
 
                 # If list is too long, pop the first entry.
                 if len(self.data[topic]) > self.max_length:
