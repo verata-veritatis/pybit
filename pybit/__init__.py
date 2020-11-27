@@ -1390,6 +1390,9 @@ class WebSocket:
             raise Exception('\'klineV2\' requires a timeframe and ticker, e.g.'
                             ' \'klineV2.5.BTCUSD\'.')
 
+        # set websocket name for logging purposes
+        self.wsName = 'Authenticated' if api_key else 'Non-Authenticated'
+
         # Setup logger.
         logging.basicConfig(
             level=logging_level,
@@ -1397,7 +1400,7 @@ class WebSocket:
             datefmt='%Y-%m-%d %H:%M:%S'
         )
         self.logger = logging.getLogger(__name__)
-        self.logger.info('Initializing WebSocket.')
+        self.logger.info(f'Initializing {self.wsName} WebSocket.')
 
         # Ensure authentication for private topics.
         if any(i in subscriptions for i in [
@@ -1451,7 +1454,7 @@ class WebSocket:
 
         # If the topic given isn't in the initial subscribed list.
         if topic not in self.subscriptions:
-            self.logger.error('You aren\'t subscribed to this topic.')
+            self.logger.error(f'You aren\'t subscribed to the {topic} topic.')
             return
 
         # Pop all trade, execution, or order data on each poll.
@@ -1695,7 +1698,7 @@ class WebSocket:
         """
 
         if not self.exited:
-            self.logger.error(f'WebSocket encountered error: {error}.')
+            self.logger.error(f'WebSocket {self.wsName} encountered error: {error}.')
             self.exit()
 
         # Reconnect.
@@ -1706,10 +1709,10 @@ class WebSocket:
         """
         Log WS open.
         """
-        self.logger.debug('WebSocket opened.')
+        self.logger.debug(f'WebSocket {self.wsName} opened.')
 
     def _on_close(self):
         """
         Log WS close.
         """
-        self.logger.info('WebSocket closed.')
+        self.logger.info(f'WebSocket {self.wsName} closed.')
