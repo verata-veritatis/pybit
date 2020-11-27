@@ -1570,11 +1570,11 @@ class WebSocket:
                 self.data[topic] = {}
 
     @staticmethod
-    def _find_index(source, target):
+    def _find_index(source, target, key):
         """
         Find the index in source list of the targeted ID.
         """
-        return next(i for i, j in enumerate(source) if j['id'] == target['id'])
+        return next(i for i, j in enumerate(source) if j[key] == target[key])
 
     def _on_message(self, message):
         """
@@ -1619,30 +1619,45 @@ class WebSocket:
             # If incoming 'orderbookL2' data.
             if 'orderBookL2' in topic:
 
-                # Record the initial snapshot.
-                if 'snapshot' in msg_json['type']:
-                    self.data[topic] = msg_json['data']['order_book']
-
+                # Make updates according to delta response.
                 if 'delta' in msg_json['type']:
 
                     # Delete.
                     for entry in msg_json['data']['delete']:
-                        idx = self._find_index(self.data[topic], entry)
+                        idx = self._find_index(self.data[topic], entry, 'id')
                         self.data[topic].pop(idx)
 
                     # Update.
                     for entry in msg_json['data']['update']:
-                        idx = self._find_index(self.data[topic], entry)
+                        idx = self._find_index(self.data[topic], entry, 'id')
                         self.data[topic][idx] = entry
 
                     # Insert.
                     for entry in msg_json['data']['insert']:
                         self.data[topic].append(entry)
 
-            # For incoming 'trade', 'execution', 'order' and 'stop_order'
-            # data.
-            elif any(i in topic for i in ['trade', 'execution', 'order',
-                                          'stop_order']):
+                # Record the initial snapshot.
+                elif 'snapshot' in msg_json['type']:
+                    self.data[topic] = msg_json['data']['order_book']
+
+            # For incoming 'order' and 'stop_order' data.
+            elif any(i in topic for i in ['order', 'stop_order']):
+
+                # record incoming data  
+                for i in msg_json['data']:
+                    try:
+                        # update existing entries
+                        idx = self._find_index(self.data[topic], i, 'order_id')
+                        self.data[topic][idx] = i
+                    except StopIteration:
+                        # Keep appending or create new list if not already created.
+                        try:
+                            self.data[topic].append(i)
+                        except AttributeError:
+                            self.data[topic] = msg_json['data']
+
+            # For incoming 'trade' and 'execution' data.
+            elif any(i in topic for i in ['trade', 'execution']):
 
                 # Keep appending or create new list if not already created.
                 try:
@@ -1665,14 +1680,14 @@ class WebSocket:
             # If incoming 'instrument_info' data.
             elif 'instrument_info' in topic:
 
-                # Record the initial snapshot.
-                if 'snapshot' in msg_json['type']:
-                    self.data[topic] = msg_json['data']
-
                 # Make updates according to delta response.
-                elif 'delta' in msg_json['type']:
+                if 'delta' in msg_json['type']:
                     for i in msg_json['data']['update'][0]:
                         self.data[topic][i] = msg_json['data']['update'][0][i]
+
+                # Record the initial snapshot.
+                elif 'snapshot' in msg_json['type']:
+                    self.data[topic] = msg_json['data']
 
             # If incoming 'position' data.
             elif 'position' in topic:
