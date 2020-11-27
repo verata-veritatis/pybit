@@ -1457,12 +1457,11 @@ class WebSocket:
             self.logger.error(f'You aren\'t subscribed to the {topic} topic.')
             return
 
-        # Pop all trade, execution, or order data on each poll.
+        # Pop all trade or execution data on each poll.
+        # dont pop order or stop_order data as we will lose valuable state
         if topic.startswith((
                 'trade',
-                'execution',
-                'order',
-                'stop_order'
+                'execution'
         )) and not topic.startswith('orderBook'):
             data = self.data[topic].copy()
             self.data[topic] = []
