@@ -1646,7 +1646,7 @@ class WebSocket:
                 for i in msg_json['data']:
                     try:
                         # update existing entries
-                        idx = self._find_index(self.data[topic], i, 'order_id')
+                        idx = self._find_index(self.data[topic], i, topic+'_id')
                         self.data[topic][idx] = i
                     except StopIteration:
                         # Keep appending or create new list if not already created.
