@@ -1390,6 +1390,9 @@ class WebSocket:
             raise Exception('\'klineV2\' requires a timeframe and ticker, e.g.'
                             ' \'klineV2.5.BTCUSD\'.')
 
+        # set websocket name for logging purposes
+        self.wsName = 'Authenticated' if api_key else 'Non-Authenticated'
+
         # Setup logger.
         logging.basicConfig(
             level=logging_level,
@@ -1397,7 +1400,7 @@ class WebSocket:
             datefmt='%Y-%m-%d %H:%M:%S'
         )
         self.logger = logging.getLogger(__name__)
-        self.logger.info('Initializing WebSocket.')
+        self.logger.info(f'Initializing {self.wsName} WebSocket.')
 
         # Ensure authentication for private topics.
         if any(i in subscriptions for i in [
@@ -1451,15 +1454,14 @@ class WebSocket:
 
         # If the topic given isn't in the initial subscribed list.
         if topic not in self.subscriptions:
-            self.logger.error('You aren\'t subscribed to this topic.')
+            self.logger.error(f'You aren\'t subscribed to the {topic} topic.')
             return
 
-        # Pop all trade, execution, or order data on each poll.
+        # Pop all trade or execution data on each poll.
+        # dont pop order or stop_order data as we will lose valuable state
         if topic.startswith((
                 'trade',
-                'execution',
-                'order',
-                'stop_order'
+                'execution'
         )) and not topic.startswith('orderBook'):
             data = self.data[topic].copy()
             self.data[topic] = []
@@ -1567,11 +1569,11 @@ class WebSocket:
                 self.data[topic] = {}
 
     @staticmethod
-    def _find_index(source, target):
+    def _find_index(source, target, key):
         """
         Find the index in source list of the targeted ID.
         """
-        return next(i for i, j in enumerate(source) if j['id'] == target['id'])
+        return next(i for i, j in enumerate(source) if j[key] == target[key])
 
     def _on_message(self, message):
         """
@@ -1616,37 +1618,52 @@ class WebSocket:
             # If incoming 'orderbookL2' data.
             if 'orderBookL2' in topic:
 
-                # Record the initial snapshot.
-                if 'snapshot' in msg_json['type']:
-                    self.data[topic] = msg_json['data']['order_book']
-
+                # Make updates according to delta response.
                 if 'delta' in msg_json['type']:
 
                     # Delete.
                     for entry in msg_json['data']['delete']:
-                        idx = self._find_index(self.data[topic], entry)
+                        idx = self._find_index(self.data[topic], entry, 'id')
                         self.data[topic].pop(idx)
 
                     # Update.
                     for entry in msg_json['data']['update']:
-                        idx = self._find_index(self.data[topic], entry)
+                        idx = self._find_index(self.data[topic], entry, 'id')
                         self.data[topic][idx] = entry
 
                     # Insert.
                     for entry in msg_json['data']['insert']:
                         self.data[topic].append(entry)
 
-            # For incoming 'trade', 'execution', 'order' and 'stop_order'
-            # data.
-            elif any(i in topic for i in ['trade', 'execution', 'order',
-                                          'stop_order']):
+                # Record the initial snapshot.
+                elif 'snapshot' in msg_json['type']:
+                    self.data[topic] = msg_json['data']['order_book']
+
+            # For incoming 'order' and 'stop_order' data.
+            elif any(i in topic for i in ['order', 'stop_order']):
+
+                # record incoming data  
+                for i in msg_json['data']:
+                    try:
+                        # update existing entries
+                        idx = self._find_index(self.data[topic], i, topic+'_id')
+                        self.data[topic][idx] = i
+                    except StopIteration:
+                        # Keep appending or create new list if not already created.
+                        try:
+                            self.data[topic].append(i)
+                        except AttributeError:
+                            self.data[topic] = msg_json['data']
+
+            # For incoming 'trade' and 'execution' data.
+            elif any(i in topic for i in ['trade', 'execution']):
 
                 # Keep appending or create new list if not already created.
                 try:
                     for i in msg_json['data']:
                         self.data[topic].append(i)
                 except AttributeError:
-                    self.data[topic] = [msg_json['data']]
+                    self.data[topic] = msg_json['data']
 
                 # If list is too long, pop the first entry.
                 if len(self.data[topic]) > self.max_length:
@@ -1662,14 +1679,14 @@ class WebSocket:
             # If incoming 'instrument_info' data.
             elif 'instrument_info' in topic:
 
-                # Record the initial snapshot.
-                if 'snapshot' in msg_json['type']:
-                    self.data[topic] = msg_json['data']
-
                 # Make updates according to delta response.
-                elif 'delta' in msg_json['type']:
+                if 'delta' in msg_json['type']:
                     for i in msg_json['data']['update'][0]:
                         self.data[topic][i] = msg_json['data']['update'][0][i]
+
+                # Record the initial snapshot.
+                elif 'snapshot' in msg_json['type']:
+                    self.data[topic] = msg_json['data']
 
             # If incoming 'position' data.
             elif 'position' in topic:
@@ -1695,7 +1712,7 @@ class WebSocket:
         """
 
         if not self.exited:
-            self.logger.error(f'WebSocket encountered error: {error}.')
+            self.logger.error(f'WebSocket {self.wsName} encountered error: {error}.')
             self.exit()
 
         # Reconnect.
@@ -1706,10 +1723,10 @@ class WebSocket:
         """
         Log WS open.
         """
-        self.logger.debug('WebSocket opened.')
+        self.logger.debug(f'WebSocket {self.wsName} opened.')
 
     def _on_close(self):
         """
         Log WS close.
         """
-        self.logger.info('WebSocket closed.')
+        self.logger.info(f'WebSocket {self.wsName} closed.')
