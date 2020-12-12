@@ -7,34 +7,34 @@ ws = WebSocket('wss://stream.bybit.com/realtime',
 
 class HTTPTest(unittest.TestCase):
 
-    def test_get_orderbook(self):
+    def test_orderbook(self):
         self.assertEqual(
-            session.get_orderbook(symbol='BTCUSD')['ret_msg'],
+            session.orderbook(symbol='BTCUSD')['ret_msg'],
             'OK'
         )
 
-    def test_get_klines(self):
+    def test_query_kline(self):
         self.assertEqual(
-            (session.get_klines(symbol='BTCUSD', interval='1', 
+            (session.query_kline(symbol='BTCUSD', interval='1', 
                 from_time=int(time.time())-60*60)['ret_msg']),
             'OK'
         )
     
-    def test_get_tickers(self):
+    def test_latest_information_for_symbol(self):
         self.assertEqual(
-            session.get_tickers()['ret_msg'],
+            session.latest_information_for_symbol()['ret_msg'],
             'OK'
         )
 
-    def test_get_trading_records(self):
+    def test_public_trading_records(self):
         self.assertEqual(
-            session.get_trading_records(symbol='BTCUSD')['ret_msg'],
+            session.public_trading_records(symbol='BTCUSD')['ret_msg'],
             'OK'
         )
 
-    def test_get_symbols(self):
+    def test_query_symbol(self):
         self.assertEqual(
-            session.get_symbols()['ret_msg'],
+            session.query_symbol()['ret_msg'],
             'OK'
         )
 
