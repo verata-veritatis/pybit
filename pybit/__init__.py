@@ -158,7 +158,7 @@ class HTTP:
 
         # Replace query param 'from_time' since 'from' keyword is reserved.
         # Temporary workaround until Bybit updates official request params
-        if 'from_time' in kwargs):
+        if 'from_time' in kwargs:
             kwargs['from'] = kwargs.pop('from_time')
 
         if 'symbol' in kwargs and 'USDT' in kwargs['symbol']:
@@ -247,7 +247,7 @@ class HTTP:
 
         # Replace query param 'from_time' since 'from' keyword is reserved.
         # Temporary workaround until Bybit updates official request params
-        if 'from_time' in kwargs):
+        if 'from_time' in kwargs:
             kwargs['from'] = kwargs.pop('from_time')
 
         if 'symbol' in kwargs and 'USDT' in kwargs['symbol']:
