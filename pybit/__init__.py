@@ -1261,6 +1261,11 @@ class HTTP:
             if query is not None:
                 req_params = {k: v for k, v in query.items() if
                               v is not None}
+
+                # Replace query param 'from_time' since 'from' keyword is 
+                # reserved.
+                if ('from_time' in req_params):
+                    req_params['from'] = req_params.pop('from_time')
             else:
                 req_params = {}
 
