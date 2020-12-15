@@ -153,6 +153,11 @@ class HTTP:
         :returns: Request results as dictionary.
         """
 
+        # Replace query param 'from_time' since 'from' keyword is reserved.
+        # Temporary workaround until Bybit updates official request params
+        if 'from_time' in kwargs):
+            kwargs['from'] = kwargs.pop('from_time')
+
         if 'symbol' in kwargs and 'USDT' in kwargs['symbol']:
             suffix = '/public/linear/kline'
         else:
@@ -236,6 +241,11 @@ class HTTP:
             https://bybit-exchange.github.io/docs/inverse/#t-markpricekline.
         :returns: Request results as dictionary.
         """
+
+        # Replace query param 'from_time' since 'from' keyword is reserved.
+        # Temporary workaround until Bybit updates official request params
+        if 'from_time' in kwargs):
+            kwargs['from'] = kwargs.pop('from_time')
 
         if 'symbol' in kwargs and 'USDT' in kwargs['symbol']:
             suffix = '/public/linear/mark-price-kline'
@@ -1262,10 +1272,6 @@ class HTTP:
                 req_params = {k: v for k, v in query.items() if
                               v is not None}
 
-                # Replace query param 'from_time' since 'from' keyword is 
-                # reserved.
-                if ('from_time' in req_params):
-                    req_params['from'] = req_params.pop('from_time')
             else:
                 req_params = {}
 
