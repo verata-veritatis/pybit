@@ -197,6 +197,11 @@ class HTTP:
         :returns: Request results as dictionary.
         """
 
+        # Replace query param 'from_id' since 'from' keyword is reserved.
+        # Temporary workaround until Bybit updates official request params
+        if 'from_id' in kwargs:
+            kwargs['from'] = kwargs.pop('from_id')
+
         if 'symbol' in kwargs and 'USDT' in kwargs['symbol']:
             suffix = '/public/linear/recent-trading-records'
         else:
@@ -229,6 +234,11 @@ class HTTP:
             https://bybit-exchange.github.io/docs/inverse/#t-query_liqrecords.
         :returns: Request results as dictionary.
         """
+
+        # Replace query param 'from_id' since 'from' keyword is reserved.
+        # Temporary workaround until Bybit updates official request params
+        if 'from_id' in kwargs:
+            kwargs['from'] = kwargs.pop('from_id')
 
         return self._submit_request(
             method='GET',
@@ -1064,6 +1074,11 @@ class HTTP:
             https://bybit-exchange.github.io/docs/inverse/#t-walletrecords.
         :returns: Request results as dictionary.
         """
+
+        # Replace query param 'from_id' since 'from' keyword is reserved.
+        # Temporary workaround until Bybit updates official request params
+        if 'from_id' in kwargs:
+            kwargs['from'] = kwargs.pop('from_id')
 
         return self._submit_request(
             method='GET',
