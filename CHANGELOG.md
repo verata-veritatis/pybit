@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.9] - 2020-12-20
+
+### Modified
+
+- Added ability to handle `from` using `from_time` and `from_id` arguments since `from` is a
+  reserved keyword.
+- Removed `ignore_retries_for` from `HTTP`. `pybit` now uses a standard list of non-critical errors that can
+  be retried.
+- Added argument `retry_delay` for `HTTP`—allows user to add a custom retry delay for each retry.
+
 ## [1.1.8] - 2020-11-21
 
 - See release candidates for details.
