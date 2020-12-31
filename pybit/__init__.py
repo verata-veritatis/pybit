@@ -749,16 +749,21 @@ class HTTP:
 
     def set_leverage(self, **kwargs):
         """
-        For linear markets only. Change user leverage.
+        Change user leverage.
 
         :param kwargs: See
             https://bybit-exchange.github.io/docs/linear/#t-setleverage.
         :returns: Request results as dictionary.
         """
 
+        if 'symbol' in kwargs and 'USDT' in kwargs['symbol']:
+            suffix = '/private/linear/position/set-leverage'
+        else:
+            suffix = '/v2/private/position/leverage/save'
+
         return self._submit_request(
             method='POST',
-            path=self.endpoint + '/private/linear/position/set-leverage',
+            path=self.endpoint + suffix,
             query=kwargs,
             auth=True
         )
@@ -791,7 +796,7 @@ class HTTP:
 
         return self._submit_request(
             method='POST',
-            path=self.endpoint + '/position/change-position-margin',
+            path=self.endpoint + '/v2/private/position/change-position-margin',
             query=kwargs,
             auth=True
         )
@@ -808,7 +813,7 @@ class HTTP:
         if 'symbol' in kwargs and 'USDT' in kwargs['symbol']:
             suffix = '/private/linear/position/trading-stop'
         else:
-            suffix = '/open-api/position/trading-stop'
+            suffix = '/v2/private/position/trading-stop'
 
         return self._submit_request(
             method='POST',
@@ -860,6 +865,8 @@ class HTTP:
             https://bybit-exchange.github.io/docs/inverse/#t-changeleverage.
         :returns: Request results as dictionary.
         """
+
+        self.logger.warn('This endpoint is deprecated and will be removed. Use set_leverage()')
 
         return self._submit_request(
             method='POST',
@@ -962,7 +969,7 @@ class HTTP:
         if 'symbol' in kwargs and 'USDT' in kwargs['symbol']:
             suffix = '/public/linear/funding/prev-funding-rate'
         else:
-            suffix = '/open-api/funding/prev-funding-rate'
+            suffix = '/v2/private/funding/prev-funding-rate'
 
         return self._submit_request(
             method='GET',
@@ -986,7 +993,7 @@ class HTTP:
         if 'symbol' in kwargs and 'USDT' in kwargs['symbol']:
             suffix = '/private/linear/funding/prev-funding'
         else:
-            suffix = '/open-api/funding/prev-funding'
+            suffix = '/v2/private/funding/prev-funding'
 
         return self._submit_request(
             method='GET',
@@ -1007,7 +1014,7 @@ class HTTP:
         if 'symbol' in kwargs and 'USDT' in kwargs['symbol']:
             suffix = '/private/linear/funding/predicted-funding'
         else:
-            suffix = '/open-api/funding/predicted-funding'
+            suffix = '/v2/private/funding/predicted-funding'
 
         return self._submit_request(
             method='GET',
@@ -1025,7 +1032,7 @@ class HTTP:
 
         return self._submit_request(
             method='GET',
-            path=self.endpoint + '/open-api/api-key',
+            path=self.endpoint + '/v2/private/account/api-key',
             auth=True
         )
 
@@ -1082,7 +1089,7 @@ class HTTP:
 
         return self._submit_request(
             method='GET',
-            path=self.endpoint + '/open-api/wallet/fund/records',
+            path=self.endpoint + '/v2/private/wallet/fund/records',
             query=kwargs,
             auth=True
         )
@@ -1098,7 +1105,7 @@ class HTTP:
 
         return self._submit_request(
             method='GET',
-            path=self.endpoint + '/open-api/wallet/withdraw/list',
+            path=self.endpoint + '/v2/private/wallet/withdraw/list',
             query=kwargs,
             auth=True
         )
