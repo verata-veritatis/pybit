@@ -1742,14 +1742,16 @@ class WebSocket:
                 for p in msg_json['data']:
 
                     # linear (USDT) positions have Buy|Sell side and
-                    # updates contain all USDT positions
-                    if p['side'] != 'None':
+                    # updates contain all USDT positions.
+                    # For linear tickers...
+                    if p['symbol'].endswith('USDT'):
                         try:
                             self.data[topic][p['symbol']][p['side']] = p
+                        # if side key hasn't been created yet...
                         except KeyError:
                             self.data[topic][p['symbol']] = {p['side']: p}
 
-                    # non-linear positions
+                    # For non-linear tickers...
                     else:
                         self.data[topic][p['symbol']] = p
 
