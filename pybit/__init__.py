@@ -1485,12 +1485,8 @@ class WebSocket:
         # Restart on error.
         self.handle_error = restart_on_error
 
-        # Set initial booleans.
-        self.exited = False
-        self.auth = False
-
-        # Initialize dictionary and connect.
-        self.data = {}
+        # Set initial state, initialize dictionary and connnect.
+        self._reset()
         self._connect(self.endpoint)
 
     def fetch(self, topic):
@@ -1773,6 +1769,7 @@ class WebSocket:
 
         # Reconnect.
         if self.handle_error:
+            self._reset()
             self._connect(self.endpoint)
 
     def _on_open(self):
@@ -1786,3 +1783,11 @@ class WebSocket:
         Log WS close.
         """
         self.logger.info(f'WebSocket {self.wsName} closed.')
+
+    def _reset(self):
+        """
+        Set state booleans and initialize dictionary.
+        """
+        self.exited = False
+        self.auth = False
+        self.data = {}
