@@ -1522,7 +1522,7 @@ class WebSocket:
             return data
         else:
             try:
-                return self.data[topic].copy()
+                return self.data[topic]
             except KeyError:
                 return []
 
