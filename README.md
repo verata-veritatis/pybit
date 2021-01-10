@@ -10,6 +10,31 @@
 
 Python3 API connector for Bybit's HTTP and Websockets APIs.
 
+## Table of Contents
+
+- [About](#about)
+- [Development](#development)
+- [Installation](#installation)
+- [Basic Usage](#basic-usage)
+  * [Market Data Endpoints](#market-data-endpoints)
+    + [Advanced Data](#advanced-data)
+  * [Account Data Endpoints](#account-data-endpoints)
+    + [Active Orders](#active-orders)
+    + [Conditional Orders](#conditional-orders)
+    + [Position](#position)
+    + [Risk Limit](#risk-limit)
+    + [Funding](#funding)
+    + [API Key Info](#api-key-info)
+    + [LCP Info](#lcp-info)
+  * [Wallet Data Endpoints](#wallet-data-endpoints)
+  * [API Data Endpoints](#api-data-endpoints)
+  * [WebSocket](#websocket)
+    + [Public Topics](#public-topics)
+    + [Private Topics](#private-topics)
+- [Contact](#contact)
+- [Contributors](#contributors)
+- [Donations](#donations)
+
 ## About
 Put simply, `pybit` (Python + Bybit) is a lightweight one-stop-shop module for the Bybit HTTP and WebSocket APIs. I was personally never a fan of auto-generated connectors that used a mosh-pit of various modules you didn't want (sorry, `bravado`) and wanted to build my own Python3-dedicated connector with very little external resources. The goal of the connector is to provide traders and developers with an easy-to-use high-performing module that has an active issue and discussion board leading to consistent improvements.
 
@@ -22,7 +47,7 @@ As a user of the module myself, `pybit` is being actively developed, especially 
 pip install pybit
 ```
 
-## How to Use
+## Basic Usage
 You can retrieve the HTTP and WebSocket classes like so:
 ```python
 from pybit import HTTP, WebSocket
@@ -63,13 +88,141 @@ session.place_active_order_bulk(orders)
 ws.fetch('order')
 ws.fetch('position')
 ```
-Check out the example python files for more information on available
-endpoints and methods, and more documentation on the `HTTP` methods can
-be found here: https://github.com/verata-veritatis/pybit/blob/master/docs/HTTP.md.
+Check out the example python files or the list of endpoints below for more information on available
+endpoints and methods. More documentation on the `HTTP` and `WebSocket` methods can
+be found at https://github.com/verata-veritatis/pybit/blob/master/docs/HTTP.md and https://github.com/verata-veritatis/pybit/blob/master/docs/WebSocket.md, respectively.
+
+### Market Data Endpoints
+
+| Endpoint                          | Method |
+| -------------                     | ------------- |
+| Orderbook                         | `orderbook()`  |
+| Query Kline                       | `query_kline()` |
+| Latest Information for Symbol     | `latest_information_for_symbol()` |
+| Public Trading Records            | `public_trading_records()` |
+| Query Symbol                      | `query_symbol()` |
+| Liquidated Orders                 | `liquidated_orders()` |
+| Query Mark Price Kline            | `query_mark_price_kline()` |
+| Open Interest                     | `open_interest()` |
+
+#### Advanced Data
+
+| Endpoint              | Method |
+| -------------         | ------------- |
+| Query Kline           | `query_kline()` |
+| Latest Big Deal       | `latest_big_deal()` |
+| Long Short Ratio      | `long_short_ratio()` |
+
+### Account Data Endpoints
+
+#### Active Orders
+
+| Endpoint                      | Method |
+| -------------                 | ------------- |
+| Place Active Order            | `place_active_order()`  |
+| Get Active Order              | `get_active_order()`  |
+| Cancel Active Order           | `cancel_active_order()`  |
+| Cancel All Active Orders      | `cancel_all_active_orders()`  |
+| Replace Active Order          | `replace_active_order()`  |
+| Query Active Order            | `query_active_order()` |
+
+#### Conditional Orders
+
+| Endpoint                          | Method |
+| -------------                     | ------------- |
+| Place Conditional Order           | `place_conditional_order()`  |
+| Get Conditional Order             | `get_conditional_order()`  |
+| Cancel Conditional Order          | `cancel_conditional_order()`  |
+| Cancel All Conditional Orders     | `cancel_all_conditional_orders()`  |
+| Replace Conditional Order         | `replace_conditional_order()`  |
+| Query Conditional Order           | `query_conditional_order()` |
+
+#### Position
+
+| Endpoint                                              | Method |
+| -------------                                         | ------------- |
+| My Position                                           | `my_position()`  |
+| Set Auto Add Margin (Linear)                          | `set_auto_add_margin()`  |
+| Cross/Isolated Margin Switch (Linear)                 | `cross_isolated_margin_switch()`  |
+| Full/Partial Position SL/TP Switch (not avail. yet)   | N/A |
+| Add/Reduce Margin (Linear)                            | `add_reduce_margin()` |
+| Set Trading-Stop                                      | `set_trading_stop()`  |
+| Set Leverage                                          | `set_leverage()`  |
+| User Leverage (deprecated)                            | `user_leverage()` |
+| User Trade Records                                    | `user_trade_records()`  |
+| Closed Profit and Loss                                | `closed_profit_and_loss()` |
+
+#### Risk Limit
+
+| Endpoint                      | Method |
+| -------------                 | ------------- |
+| Get Risk Limit                | `my_position()`  |
+| Set Risk Limit (Inverse)      | `set_auto_add_margin()`  |
+
+#### Funding
+
+| Endpoint                                      | Method |
+| -------------                                 | ------------- |
+| Get the Last Funding Rate (Inverse)           | `get_the_last_funding_rate()`  |
+| My Last Funding Fee                           | `my_last_funding_fee()`  |
+| Predicted Funding Rate and My Funding Fee     | `predicted_funding_rate()` |
+
+#### API Key Info
+
+| Endpoint          | Method |
+| -------------     | ------------- |
+| API Key Info      | `api_key_info()`  |
+
+#### LCP Info
+
+| Endpoint          | Method |
+| -------------     | ------------- |
+| LCP Info          | `lcp_info()`  |
+
+### Wallet Data Endpoints
+
+| Endpoint                  | Method |
+| -------------             | ------------- |
+| Get Wallet Balance        | `get_wallet_balance()`  |
+| Wallet Fund Records       | `wallet_fund_records()`  |
+| Withdraw Records          | `withdraw_records()`  |
+| Asset Exchange Records    | `asset_exchange_records()` |
+
+### API Data Endpoints
+
+| Endpoint           | Method |
+| -------------      | ------------- |
+| Server Time        | `server_time()`  |
+| Announcement       | `announcement()`  |
+
+### WebSocket
+
+#### Public Topics
+
+| Topic Name            | Topic String |
+| -------------         | ------------- |
+| orderBookL2_25        | `'orderBookL2_25'`  |
+| orderBookL2_200       | `'orderBookL2_200'`  |
+| trade                 | `'trade'`  |
+| insurance             | `'insurance'`  |
+| instrument_info       | `'instrument_info'`  |
+| klineV2               | `'klineV2'`  |
+
+#### Private Topics
+
+| Topic Name            | Topic String |
+| -------------         | ------------- |
+| position              | `'position'`  |
+| execution             | `'execution'`  |
+| order                 | `'order'`  |
+| stop_order            | `'stop_order'`  |
+
+...
 
 ## Contact
 You can reach out to me via Telegram: @verataveritatis. I'm pretty active on the [BybitAPI Telegram](https://t.me/Bybitapi) group chat.
-## Contributors ✨
+
+## Contributors
 
 Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
 
@@ -90,3 +243,13 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
 <!-- ALL-CONTRIBUTORS-LIST:END -->
 
 This project follows the [all-contributors](https://github.com/all-contributors/all-contributors) specification. Contributions of any kind welcome!
+
+## Donations
+
+I work on `pybit` in my spare time, along with other contributors. If you like the project and want to donate, you can do so to the following addresses:
+
+```
+XTZ:
+BTC:
+ETH:
+```
