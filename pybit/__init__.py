@@ -27,7 +27,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 from .exceptions import FailedRequestError, InvalidRequestError
 
-VERSION = '1.1.10rc0'
+VERSION = '1.1.11'
 
 
 class HTTP:
@@ -1399,7 +1399,7 @@ class WebSocket:
     def __init__(self, endpoint, api_key=None, api_secret=None,
                  subscriptions=None, logging_level=logging.INFO,
                  max_data_length=200, ping_interval=30, ping_timeout=10,
-                 restart_on_error=True):
+                 restart_on_error=True, purge_on_fetch=True):
         """
         Initializes the websocket session.
 
@@ -1422,6 +1422,10 @@ class WebSocket:
             Exception is raised.
         :param restart_on_error: Whether or not the connection should restart on
             error.
+        :param purge_on_fetch: Whether or not stored data should be purged each
+            fetch. For example, if the user subscribes to the 'trade' topic, and
+            fetches, should the data show all trade history up to the maximum
+            length or only get the data since the last fetch?
 
         :returns: WebSocket session.
         """
@@ -1484,6 +1488,7 @@ class WebSocket:
 
         # Restart on error.
         self.handle_error = restart_on_error
+        self.purge = purge_on_fetch
 
         # Set initial state, initialize dictionary and connnect.
         self._reset()
@@ -1514,7 +1519,8 @@ class WebSocket:
                 'execution'
         )) and not topic.startswith('orderBook'):
             data = self.data[topic].copy()
-            self.data[topic] = []
+            if self.purge:
+                self.data[topic] = []
             return data
         else:
             try:
@@ -1696,7 +1702,7 @@ class WebSocket:
                 for i in msg_json['data']:
                     try:
                         # update existing entries
-                        idx = self._find_index(self.data[topic], i, topic+'_id')
+                        idx = self._find_index(self.data[topic], i, 'order_id')
                         self.data[topic][idx] = i
                     except StopIteration:
                         # Keep appending or create new list if not already created.
