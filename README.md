@@ -195,6 +195,16 @@ be found at https://github.com/verata-veritatis/pybit/blob/master/docs/HTTP.md a
 | Server Time        | `server_time()`  |
 | Announcement       | `announcement()`  |
 
+### pybit Custom Endpoints
+
+| Endpoint                          | Method |
+| -------------                     | ------------- |
+| Place Active Order (Bulk)         | `place_active_order_bulk()`  |
+| Cancel Active Order (Bulk)        | `cancel_active_order_bulk()`  |
+| Place Conditional Order (Bulk)    | `place_conditional_order_bulk()`  |
+| Cancel Conditional Order (Bulk)   | `cancel_conditional_order_bulk()`  |
+| Close Position                    | `close_position()` |
+
 ### WebSocket
 
 #### Public Topics
@@ -216,8 +226,6 @@ be found at https://github.com/verata-veritatis/pybit/blob/master/docs/HTTP.md a
 | execution             | `'execution'`  |
 | order                 | `'order'`  |
 | stop_order            | `'stop_order'`  |
-
-...
 
 ## Contact
 You can reach out to me via Telegram: @verataveritatis. I'm pretty active on the [BybitAPI Telegram](https://t.me/Bybitapi) group chat.
@@ -249,7 +257,7 @@ This project follows the [all-contributors](https://github.com/all-contributors/
 I work on `pybit` in my spare time, along with other contributors. If you like the project and want to donate, you can do so to the following addresses:
 
 ```
-XTZ:
-BTC:
-ETH:
+XTZ: tz1hKHdZeHf2LMpyJmZzj4eteF7tNNP2c97C
+BTC: bc1q9tamcc7hmcwya42mkplahrvqvkcr52yd56um69
+ETH: 0xDe4BbEB308A995FF3a8De98F70943D756EcE058D
 ```

@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.12] - 2020-01-20
+
+### Modified
+
+- `WebSocket` will now temporarily differentiate between inverse and linear endpoints for the 'order' topic
+  since incoming data has differing keys.
+
 ## [1.1.11] - 2020-01-12
 
 ### Added
@@ -13,8 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Modified
 
-- Fixed a bug on 'stop_order' for `WebSocket` that would prevent data from being appended due to deprecation
- of `stop_order_id`.
+- Fixed a bug on 'stop_order' for `WebSocket` that would prevent data from being appended due to deprecation 
+  of `stop_order_id`.
 
 ## [1.1.10] - 2020-01-08
 
