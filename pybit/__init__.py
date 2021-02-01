@@ -23,11 +23,18 @@ import threading
 import requests
 import websocket
 
+from datetime import datetime as dt
 from concurrent.futures import ThreadPoolExecutor
 
 from .exceptions import FailedRequestError, InvalidRequestError
 
-VERSION = '1.1.12'
+# Requests will use simplejson if available.
+try:
+    from simplejson.errors import JSONDecodeError
+except ImportError:
+    from json.decoder import JSONDecodeError
+
+VERSION = '1.1.13'
 
 
 class HTTP:
@@ -1271,7 +1278,8 @@ class HTTP:
             if retries_attempted < 0:
                 raise FailedRequestError(
                     message='Bad Request. Retries exceeded maximum.',
-                    status_code=400
+                    status_code=400,
+                    time=dt.utcnow().strftime("%H:%M:%S")
                 )
 
             retries_remaining = f'{retries_attempted} retries remain.'
@@ -1336,7 +1344,7 @@ class HTTP:
                 s_json = s.json()
 
             # If we have trouble converting, handle the error and retry.
-            except json.decoder.JSONDecodeError as e:
+            except JSONDecodeError as e:
                 if self.force_retry:
                     self.logger.error(f'{e}. {retries_remaining}')
                     time.sleep(self.retry_delay)
@@ -1344,7 +1352,8 @@ class HTTP:
                 else:
                     raise FailedRequestError(
                         message='Conflict. Could not decode JSON.',
-                        status_code=409
+                        status_code=409,
+                        time=dt.utcnow().strftime("%H:%M:%S")
                     )
 
             # If Bybit returns an error, raise.
@@ -1375,7 +1384,7 @@ class HTTP:
                         reset_str = time.strftime("%X", time.localtime(limit_reset))
                         err_delay = int(limit_reset) - int(time.time())
                         error_msg =(f'Ratelimit will reset at {reset_str}. '
-                                    f'Sleeping for {delay} seconds')
+                                    f'Sleeping for {err_delay} seconds')
 
                     # Log the error.
                     self.logger.error(f'{error_msg}. {retries_remaining}')
@@ -1385,7 +1394,8 @@ class HTTP:
                 else:
                     raise InvalidRequestError(
                         message=s_json["ret_msg"],
-                        status_code=s_json["ret_code"]
+                        status_code=s_json["ret_code"],
+                        time=dt.utcnow().strftime("%H:%M:%S")
                     )
             else:
                 return s_json
@@ -1399,7 +1409,8 @@ class WebSocket:
     def __init__(self, endpoint, api_key=None, api_secret=None,
                  subscriptions=None, logging_level=logging.INFO,
                  max_data_length=200, ping_interval=30, ping_timeout=10,
-                 restart_on_error=True, purge_on_fetch=True):
+                 restart_on_error=True, purge_on_fetch=True,
+                 trim_data=True):
         """
         Initializes the websocket session.
 
@@ -1426,6 +1437,8 @@ class WebSocket:
             fetch. For example, if the user subscribes to the 'trade' topic, and
             fetches, should the data show all trade history up to the maximum
             length or only get the data since the last fetch?
+        :param trim_data: Decide whether the returning data should be
+            trimmed to only provide the data value.
 
         :returns: WebSocket session.
         """
@@ -1486,9 +1499,10 @@ class WebSocket:
         self.ping_interval = ping_interval
         self.ping_timeout = ping_timeout
 
-        # Restart on error.
+        # Other optional data handling settings.
         self.handle_error = restart_on_error
         self.purge = purge_on_fetch
+        self.trim = trim_data
 
         # Set initial state, initialize dictionary and connnect.
         self._reset()
@@ -1679,13 +1693,13 @@ class WebSocket:
 
                     # Delete.
                     for entry in msg_json['data']['delete']:
-                        idx = self._find_index(self.data[topic], entry, 'id')
-                        self.data[topic].pop(idx)
+                        index = self._find_index(self.data[topic], entry, 'id')
+                        self.data[topic].pop(index)
 
                     # Update.
                     for entry in msg_json['data']['update']:
-                        idx = self._find_index(self.data[topic], entry, 'id')
-                        self.data[topic][idx] = entry
+                        index = self._find_index(self.data[topic], entry, 'id')
+                        self.data[topic][index] = entry
 
                     # Insert.
                     for entry in msg_json['data']['insert']:
@@ -1703,9 +1717,9 @@ class WebSocket:
                     try:
                         # update existing entries
                         # temporary workaround for field anomaly in stop_order data
-                        id =  topic+'_id' if i['symbol'].endswith('USDT') else 'order_id'
-                        idx = self._find_index(self.data[topic], i, id)
-                        self.data[topic][idx] = i
+                        ord_id = topic + '_id' if i['symbol'].endswith('USDT') else 'order_id'
+                        index = self._find_index(self.data[topic], i, ord_id)
+                        self.data[topic][index] = i
                     except StopIteration:
                         # Keep appending or create new list if not already created.
                         try:
@@ -1732,7 +1746,7 @@ class WebSocket:
                                           'candle']):
 
                 # Record incoming data.
-                self.data[topic] = msg_json['data'][0]
+                self.data[topic] = msg_json['data'][0] if self.trim else msg_json
 
             # If incoming 'instrument_info' data.
             elif 'instrument_info' in topic:
@@ -1744,7 +1758,7 @@ class WebSocket:
 
                 # Record the initial snapshot.
                 elif 'snapshot' in msg_json['type']:
-                    self.data[topic] = msg_json['data']
+                    self.data[topic] = msg_json['data'] if self.trim else msg_json
 
             # If incoming 'position' data.
             elif 'position' in topic:

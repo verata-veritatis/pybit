@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.13] - 2020-02-01
+
+### Modified
+
+- `requests` will use `JSONDecodeError` from `simplejson` if it is available—`pybit` will now do the same to prevent
+  errors.
+- Fixed a bug where `HTTP` retry would crash on rate limit reached due to undefined variable.
+- Improved `InvalidRequestError` and `FailedRequestError` to include error codes and times.
+
 ## [1.1.12] - 2020-01-20
 
 ### Modified
