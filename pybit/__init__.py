@@ -1375,7 +1375,7 @@ class HTTP:
                         reset_str = time.strftime("%X", time.localtime(limit_reset))
                         err_delay = int(limit_reset) - int(time.time())
                         error_msg =(f'Ratelimit will reset at {reset_str}. '
-                                    f'Sleeping for {delay} seconds')
+                                    f'Sleeping for {err_delay} seconds')
 
                     # Log the error.
                     self.logger.error(f'{error_msg}. {retries_remaining}')
