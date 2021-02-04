@@ -1707,7 +1707,7 @@ class WebSocket:
 
                 # Record the initial snapshot.
                 elif 'snapshot' in msg_json['type']:
-                    self.data[topic] = msg_json['data']['order_book']
+                    self.data[topic] = msg_json['data']
 
             # For incoming 'order' and 'stop_order' data.
             elif any(i in topic for i in ['order', 'stop_order']):
