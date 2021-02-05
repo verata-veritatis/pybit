@@ -1686,7 +1686,7 @@ class WebSocket:
             topic = msg_json['topic']
 
             # If incoming 'orderbookL2' data.
-            if 'orderBookL2' in topic:
+            if 'orderBook' in topic:
 
                 # Make updates according to delta response.
                 if 'delta' in msg_json['type']:
