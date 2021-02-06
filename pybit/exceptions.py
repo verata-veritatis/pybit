@@ -8,7 +8,7 @@ class FailedRequestError(Exception):
     """
     def __init__(self, message, status_code, time):
         self.message = message
-        self.status_code = status_code,
+        self.status_code = status_code
         self.time = time
         super().__init__((
             f'{message} (ErrCode: {status_code}) (ErrTime: {time})'
@@ -25,7 +25,7 @@ class InvalidRequestError(Exception):
     """
     def __init__(self, message, status_code, time):
         self.message = message
-        self.status_code = status_code,
+        self.status_code = status_code
         self.time = time
         super().__init__((
             f'{message} (ErrCode: {status_code}) (ErrTime: {time} UTC)'
