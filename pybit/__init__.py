@@ -35,7 +35,7 @@ except ImportError:
     from json.decoder import JSONDecodeError
 
 # Versioning.
-VERSION = '1.1.16'
+VERSION = '1.1.17'
 
 
 class HTTP:
@@ -1679,10 +1679,10 @@ class WebSocket:
 
         self.ws = websocket.WebSocketApp(
             url=url,
-            on_message=self._on_message,
-            on_close=self._on_close,
-            on_open=self._on_open,
-            on_error=self._on_error
+            on_message=lambda ws, msg: self._on_message(msg),
+            on_close=self._on_close(),
+            on_open=self._on_open(),
+            on_error=lambda ws, err: self._on_error(err)
         )
 
         # Setup the thread running WebSocketApp.
