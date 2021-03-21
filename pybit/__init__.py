@@ -105,12 +105,19 @@ class HTTP:
             self.endpoint = endpoint
 
         # Setup logger.
-        logging.basicConfig(
-            level=logging_level,
-            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-            datefmt='%Y-%m-%d %H:%M:%S'
-        )
+
         self.logger = logging.getLogger(__name__)
+
+        if len(logging.root.handlers) == 0:
+            #no handler on root logger set -> we add handler just for this logger to not mess with custom logic from outside
+            handler = logging.StreamHandler()
+            handler.setFormatter(logging.Formatter(fmt='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                                                   datefmt='%Y-%m-%d %H:%M:%S'
+                                                   )
+                                 )
+            handler.setLevel(logging_level)
+            self.logger.addHandler(handler)
+
         self.logger.debug('Initializing HTTP session.')
         self.log_requests = log_requests
 
@@ -1554,12 +1561,18 @@ class WebSocket:
         self.wsName = 'Authenticated' if api_key else 'Non-Authenticated'
 
         # Setup logger.
-        logging.basicConfig(
-            level=logging_level,
-            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-            datefmt='%Y-%m-%d %H:%M:%S'
-        )
         self.logger = logging.getLogger(__name__)
+
+        if len(logging.root.handlers) == 0:
+            # no handler on root logger set -> we add handler just for this logger to not mess with custom logic from outside
+            handler = logging.StreamHandler()
+            handler.setFormatter(logging.Formatter(fmt='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                                                   datefmt='%Y-%m-%d %H:%M:%S'
+                                                   )
+                                 )
+            handler.setLevel(logging_level)
+            self.logger.addHandler(handler)
+
         self.logger.debug(f'Initializing {self.wsName} WebSocket.')
 
         # Ensure authentication for private topics.
