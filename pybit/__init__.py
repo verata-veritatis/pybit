@@ -35,7 +35,7 @@ except ImportError:
     from json.decoder import JSONDecodeError
 
 # Versioning.
-VERSION = '1.1.15'
+VERSION = '1.1.16'
 
 
 class HTTP:
@@ -532,7 +532,7 @@ class HTTP:
         if kwargs.get('symbol', '').endswith('USDT'):
             suffix = '/private/linear/order/search'
         elif kwargs.get('symbol', '')[-2:].isdigit():
-            suffix = '/futures/private/order/replace'
+            suffix = '/futures/private/order'
         else:
             suffix = '/v2/private/order'
 
@@ -745,7 +745,7 @@ class HTTP:
         if kwargs.get('symbol', '').endswith('USDT'):
             suffix = '/private/linear/stop-order/search'
         elif kwargs.get('symbol', '')[-2:].isdigit():
-            suffix = '/futures/private/stop-ordere'
+            suffix = '/futures/private/stop-order'
         else:
             suffix = '/v2/private/stop-order'
 
