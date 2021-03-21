@@ -567,11 +567,6 @@ class HTTP:
         else:
             suffix = '/v2/private/stop-order/create'
 
-        if kwargs.get('symbol', '').endswith('USDT'):
-            suffix = '/private/linear/stop-order/create'
-        else:
-            suffix = '/v2/private/stop-order/create'
-
         return self._submit_request(
             method='POST',
             path=self.endpoint + suffix,
