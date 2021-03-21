@@ -42,7 +42,7 @@ class HTTP:
     """
     Connector for Bybit's HTTP API.
 
-    :param endpoint: Required parameter. The endpoint URL of the HTTP API, e.g.
+    :param endpoint: The endpoint URL of the HTTP API, e.g.
         'https://api-testnet.bybit.com'.
     :type endpoint: str
 
