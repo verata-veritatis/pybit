@@ -10,7 +10,7 @@ RESTful and WebSocket APIs of the Bybit exchange.
 Documentation can be found at
 https://github.com/verata-veritatis/pybit
 
-:copyright: (c) 2020 verata-veritatis
+:copyright: (c) 2020-2021 verata-veritatis
 :license: MIT License
 
 """
@@ -34,7 +34,8 @@ try:
 except ImportError:
     from json.decoder import JSONDecodeError
 
-VERSION = '1.1.14'
+# Versioning.
+VERSION = '1.1.16'
 
 
 class HTTP:
@@ -72,6 +73,9 @@ class HTTP:
     :param force_retry: Whether or not pybit should retry a timed-out request.
     :type force_retry: bool
 
+    :param retry_codes: A list of non-fatal retry codes to retry on.
+    :type retry_codes: set
+
     :param max_retries: The number of times to re-attempt a request.
     :type max_retries: int
 
@@ -87,14 +91,18 @@ class HTTP:
 
     """
 
-    def __init__(self, endpoint, api_key=None, api_secret=None,
+    def __init__(self, endpoint=None, api_key=None, api_secret=None,
                  logging_level=logging.INFO, log_requests=False,
                  request_timeout=10, recv_window=5000, force_retry=False,
-                 max_retries=3, retry_delay=3, referral_id=None):
+                 retry_codes=None, max_retries=3, retry_delay=3,
+                 referral_id=None):
         """Initializes the HTTP class."""
 
         # Set the endpoint.
-        self.endpoint = endpoint
+        if endpoint is None:
+            self.endpoint = 'https://api.bybit.com'
+        else:
+            self.endpoint = endpoint
 
         # Setup logger.
         logging.basicConfig(
@@ -103,7 +111,7 @@ class HTTP:
             datefmt='%Y-%m-%d %H:%M:%S'
         )
         self.logger = logging.getLogger(__name__)
-        self.logger.info('Initializing HTTP session.')
+        self.logger.debug('Initializing HTTP session.')
         self.log_requests = log_requests
 
         # Set API keys.
@@ -118,7 +126,10 @@ class HTTP:
         self.retry_delay = retry_delay
 
         # Set whitelist of non-fatal Bybit return error codes to retry
-        self.retry_codes = {10002, 10006, 30034, 30035, 130035, 130150}
+        if retry_codes is None:
+            self.retry_codes = {10002, 10006, 30034, 30035, 130035, 130150}
+        else:
+            self.retry_codes = retry_codes
 
         # Initialize requests session.
         self.client = requests.Session()
@@ -137,7 +148,7 @@ class HTTP:
     def _exit(self):
         """Closes the request session."""
         self.client.close()
-        self.logger.info('HTTP session closed.')
+        self.logger.debug('HTTP session closed.')
 
     def orderbook(self, **kwargs):
         """
@@ -168,7 +179,7 @@ class HTTP:
         if 'from_time' in kwargs:
             kwargs['from'] = kwargs.pop('from_time')
 
-        if 'symbol' in kwargs and 'USDT' in kwargs['symbol']:
+        if kwargs.get('symbol', '').endswith('USDT'):
             suffix = '/public/linear/kline'
         else:
             suffix = '/v2/public/kline/list'
@@ -209,7 +220,7 @@ class HTTP:
         if 'from_id' in kwargs:
             kwargs['from'] = kwargs.pop('from_id')
 
-        if 'symbol' in kwargs and 'USDT' in kwargs['symbol']:
+        if kwargs.get('symbol', '').endswith('USDT'):
             suffix = '/public/linear/recent-trading-records'
         else:
             suffix = '/v2/public/trading-records'
@@ -267,7 +278,7 @@ class HTTP:
         if 'from_time' in kwargs:
             kwargs['from'] = kwargs.pop('from_time')
 
-        if 'symbol' in kwargs and 'USDT' in kwargs['symbol']:
+        if kwargs.get('symbol', '').endswith('USDT'):
             suffix = '/public/linear/mark-price-kline'
         else:
             suffix = '/v2/public/mark-price-kline'
@@ -334,8 +345,10 @@ class HTTP:
         :returns: Request results as dictionary.
         """
 
-        if 'symbol' in kwargs and 'USDT' in kwargs['symbol']:
+        if kwargs.get('symbol', '').endswith('USDT'):
             suffix = '/private/linear/order/create'
+        elif kwargs.get('symbol', '')[-2:].isdigit():
+            suffix = '/futures/private/order/create'
         else:
             suffix = '/v2/private/order/create'
 
@@ -378,10 +391,12 @@ class HTTP:
         :returns: Request results as dictionary.
         """
 
-        if 'symbol' in kwargs and 'USDT' in kwargs['symbol']:
+        if kwargs.get('symbol', '').endswith('USDT'):
             suffix = '/private/linear/order/list'
-        else:
+        elif kwargs.get('symbol', '')[-2:].isdigit():
             suffix = '/v2/private/order/list'
+        else:
+            suffix = '/futures/private/order/list'
 
         return self._submit_request(
             method='GET',
@@ -400,8 +415,10 @@ class HTTP:
         :returns: Request results as dictionary.
         """
 
-        if 'symbol' in kwargs and 'USDT' in kwargs['symbol']:
+        if kwargs.get('symbol', '').endswith('USDT'):
             suffix = '/private/linear/order/cancel'
+        elif kwargs.get('symbol', '')[-2:].isdigit():
+            suffix = '/futures/private/order/cancel'
         else:
             suffix = '/v2/private/order/cancel'
 
@@ -444,8 +461,10 @@ class HTTP:
         :returns: Request results as dictionary.
         """
 
-        if 'symbol' in kwargs and 'USDT' in kwargs['symbol']:
+        if kwargs.get('symbol', '').endswith('USDT'):
             suffix = '/private/linear/order/cancel-all'
+        elif kwargs.get('symbol', '')[-2:].isdigit():
+            suffix = '/futures/private/order/cancelAll'
         else:
             suffix = '/v2/private/order/cancelAll'
 
@@ -465,8 +484,10 @@ class HTTP:
         :returns: Request results as dictionary.
         """
 
-        if 'symbol' in kwargs and 'USDT' in kwargs['symbol']:
+        if kwargs.get('symbol', '').endswith('USDT'):
             suffix = '/private/linear/order/replace'
+        elif kwargs.get('symbol', '')[-2:].isdigit():
+            suffix = '/futures/private/order/replace'
         else:
             suffix = '/v2/private/order/replace'
 
@@ -508,8 +529,10 @@ class HTTP:
         :returns: Request results as dictionary.
         """
 
-        if 'symbol' in kwargs and 'USDT' in kwargs['symbol']:
+        if kwargs.get('symbol', '').endswith('USDT'):
             suffix = '/private/linear/order/search'
+        elif kwargs.get('symbol', '')[-2:].isdigit():
+            suffix = '/futures/private/order/replace'
         else:
             suffix = '/v2/private/order'
 
@@ -530,7 +553,14 @@ class HTTP:
         :returns: Request results as dictionary.
         """
 
-        if 'symbol' in kwargs and 'USDT' in kwargs['symbol']:
+        if kwargs.get('symbol', '').endswith('USDT'):
+            suffix = '/private/linear/stop-order/create'
+        elif kwargs.get('symbol', '')[-2:].isdigit():
+            suffix = '/futures/private/stop-order/create'
+        else:
+            suffix = '/v2/private/stop-order/create'
+
+        if kwargs.get('symbol', '').endswith('USDT'):
             suffix = '/private/linear/stop-order/create'
         else:
             suffix = '/v2/private/stop-order/create'
@@ -574,8 +604,10 @@ class HTTP:
         :returns: Request results as dictionary.
         """
 
-        if 'symbol' in kwargs and 'USDT' in kwargs['symbol']:
+        if kwargs.get('symbol', '').endswith('USDT'):
             suffix = '/private/linear/stop-order/list'
+        elif kwargs.get('symbol', '')[-2:].isdigit():
+            suffix = '/futures/private/stop-order/list'
         else:
             suffix = '/v2/private/stop-order/list'
 
@@ -596,8 +628,10 @@ class HTTP:
         :returns: Request results as dictionary.
         """
 
-        if 'symbol' in kwargs and 'USDT' in kwargs['symbol']:
+        if kwargs.get('symbol', '').endswith('USDT'):
             suffix = '/private/linear/stop-order/cancel'
+        elif kwargs.get('symbol', '')[-2:].isdigit():
+            suffix = '/futures/private/stop-order/cancel'
         else:
             suffix = '/v2/private/stop-order/cancel'
 
@@ -640,8 +674,10 @@ class HTTP:
         :returns: Request results as dictionary.
         """
 
-        if 'symbol' in kwargs and 'USDT' in kwargs['symbol']:
+        if kwargs.get('symbol', '').endswith('USDT'):
             suffix = '/private/linear/stop-order/cancel-all'
+        elif kwargs.get('symbol', '')[-2:].isdigit():
+            suffix = '/futures/private/stop-order/cancelAll'
         else:
             suffix = '/v2/private/stop-order/cancelAll'
 
@@ -661,8 +697,10 @@ class HTTP:
         :returns: Request results as dictionary.
         """
 
-        if 'symbol' in kwargs and 'USDT' in kwargs['symbol']:
+        if kwargs.get('symbol', '').endswith('USDT'):
             suffix = '/private/linear/stop-order/replace'
+        elif kwargs.get('symbol', '')[-2:].isdigit():
+            suffix = '/futures/private/stop-order/replace'
         else:
             suffix = '/v2/private/stop-order/replace'
 
@@ -704,8 +742,10 @@ class HTTP:
         :returns: Request results as dictionary.
         """
 
-        if 'symbol' in kwargs and 'USDT' in kwargs['symbol']:
+        if kwargs.get('symbol', '').endswith('USDT'):
             suffix = '/private/linear/stop-order/search'
+        elif kwargs.get('symbol', '')[-2:].isdigit():
+            suffix = '/futures/private/stop-ordere'
         else:
             suffix = '/v2/private/stop-order'
 
@@ -725,8 +765,10 @@ class HTTP:
         :returns: Request results as dictionary.
         """
 
-        if 'symbol' in kwargs and 'USDT' in kwargs['symbol']:
+        if kwargs.get('symbol', '').endswith('USDT'):
             suffix = '/private/linear/position/list'
+        elif kwargs.get('symbol', '')[-2:].isdigit():
+            suffix = '/futures/private/position/list'
         else:
             suffix = '/v2/private/position/list'
 
@@ -763,8 +805,10 @@ class HTTP:
         :returns: Request results as dictionary.
         """
 
-        if 'symbol' in kwargs and 'USDT' in kwargs['symbol']:
+        if kwargs.get('symbol', '').endswith('USDT'):
             suffix = '/private/linear/position/set-leverage'
+        elif kwargs.get('symbol', '')[-2:].isdigit():
+            suffix = '/futures/private/position/leverage/save'
         else:
             suffix = '/v2/private/position/leverage/save'
 
@@ -785,9 +829,31 @@ class HTTP:
         :returns: Request results as dictionary.
         """
 
+        if kwargs.get('symbol', '').endswith('USDT'):
+            suffix = '/private/linear/position/switch-isolated'
+        else:
+            suffix = '/futures/private/position/switch-mode'
+
         return self._submit_request(
             method='POST',
-            path=self.endpoint + '/private/linear/position/switch-isolated',
+            path=self.endpoint + suffix,
+            query=kwargs,
+            auth=True
+        )
+
+    def position_mode_switch(self, **kwargs):
+        """
+        For futures markets only. Switch Cross/Isolated; must set leverage
+        value when switching from Cross to Isolated.
+
+        :param kwargs: See
+            https://bybit-exchange.github.io/docs/inverse_futures/#t-marginswitch.
+        :returns: Request results as dictionary.
+        """
+
+        return self._submit_request(
+            method='POST',
+            path=self.endpoint + '/futures/private/position/switch-mode',
             query=kwargs,
             auth=True
         )
@@ -801,9 +867,14 @@ class HTTP:
         :returns: Request results as dictionary.
         """
 
+        if kwargs.get('symbol', '')[-2:].isdigit():
+            suffix = '/futures/private/position/change-position-margin'
+        else:
+            suffix = '/v2/private/position/change-position-margin'
+
         return self._submit_request(
             method='POST',
-            path=self.endpoint + '/v2/private/position/change-position-margin',
+            path=self.endpoint + suffix,
             query=kwargs,
             auth=True
         )
@@ -817,8 +888,10 @@ class HTTP:
         :returns: Request results as dictionary.
         """
 
-        if 'symbol' in kwargs and 'USDT' in kwargs['symbol']:
+        if kwargs.get('symbol', '').endswith('USDT'):
             suffix = '/private/linear/position/trading-stop'
+        elif kwargs.get('symbol', '')[-2:].isdigit():
+            suffix = '/futures/private/position/trading-stop'
         else:
             suffix = '/v2/private/position/trading-stop'
 
@@ -855,7 +928,7 @@ class HTTP:
         :returns: Request results as dictionary.
         """
 
-        self.logger.warn('This endpoint is deprecated and will be removed. Use my_position()')
+        self.logger.warning('This endpoint is deprecated and will be removed. Use my_position()')
 
         return self._submit_request(
             method='GET',
@@ -873,7 +946,7 @@ class HTTP:
         :returns: Request results as dictionary.
         """
 
-        self.logger.warn('This endpoint is deprecated and will be removed. Use set_leverage()')
+        self.logger.warning('This endpoint is deprecated and will be removed. Use set_leverage()')
 
         return self._submit_request(
             method='POST',
@@ -892,8 +965,10 @@ class HTTP:
         :returns: Request results as dictionary.
         """
 
-        if 'symbol' in kwargs and 'USDT' in kwargs['symbol']:
+        if kwargs.get('symbol', '').endswith('USDT'):
             suffix = '/private/linear/trade/execution/list'
+        elif kwargs.get('symbol', '')[-2:].isdigit():
+            suffix = '/futures/private/execution/list'
         else:
             suffix = '/v2/private/execution/list'
 
@@ -914,8 +989,10 @@ class HTTP:
         :returns: Request results as dictionary.
         """
 
-        if 'symbol' in kwargs and 'USDT' in kwargs['symbol']:
+        if kwargs.get('symbol', '').endswith('USDT'):
             suffix = '/private/linear/trade/closed-pnl/list'
+        elif kwargs.get('symbol', '')[-2:].isdigit():
+            suffix = '/futures/private/trade/closed-pnl/list'
         else:
             suffix = '/v2/private/trade/closed-pnl/list'
 
@@ -973,7 +1050,7 @@ class HTTP:
         :returns: Request results as dictionary.
         """
 
-        if 'symbol' in kwargs and 'USDT' in kwargs['symbol']:
+        if kwargs.get('symbol', '').endswith('USDT'):
             suffix = '/public/linear/funding/prev-funding-rate'
         else:
             suffix = '/v2/private/funding/prev-funding-rate'
@@ -997,7 +1074,7 @@ class HTTP:
         :returns: Request results as dictionary.
         """
 
-        if 'symbol' in kwargs and 'USDT' in kwargs['symbol']:
+        if kwargs.get('symbol', '').endswith('USDT'):
             suffix = '/private/linear/funding/prev-funding'
         else:
             suffix = '/v2/private/funding/prev-funding'
@@ -1018,7 +1095,7 @@ class HTTP:
         :returns: Request results as dictionary.
         """
 
-        if 'symbol' in kwargs and 'USDT' in kwargs['symbol']:
+        if kwargs.get('symbol', '').endswith('USDT'):
             suffix = '/private/linear/funding/predicted-funding'
         else:
             suffix = '/v2/private/funding/predicted-funding'
@@ -1271,12 +1348,14 @@ class HTTP:
 
         # Send request and return headers with body. Retry if failed.
         retries_attempted = self.max_retries
+        req_params = None
 
         while True:
 
             retries_attempted -= 1
             if retries_attempted < 0:
                 raise FailedRequestError(
+                    request=f'{method} {path}: {req_params}',
                     message='Bad Request. Retries exceeded maximum.',
                     status_code=400,
                     time=dt.utcnow().strftime("%H:%M:%S")
@@ -1310,7 +1389,7 @@ class HTTP:
 
             # Log the request.
             if self.log_requests:
-                self.logger.info(f'Request -> {method} {path}: {req_params}')
+                self.logger.debug(f'Request -> {method} {path}: {req_params}')
 
             # Prepare request; use 'params' for GET and 'data' for POST.
             if method == 'GET':
@@ -1351,6 +1430,7 @@ class HTTP:
                     continue
                 else:
                     raise FailedRequestError(
+                        request=f'{method} {path}: {req_params}',
                         message='Conflict. Could not decode JSON.',
                         status_code=409,
                         time=dt.utcnow().strftime("%H:%M:%S")
@@ -1360,12 +1440,14 @@ class HTTP:
             if s_json['ret_code']:
 
                 # Generate error message.
-                error_msg = f'{s_json["ret_msg"]} (ErrCode: {s_json["ret_code"]})'
+                error_msg = (
+                    f'{s_json["ret_msg"]} (ErrCode: {s_json["ret_code"]})'
+                )
 
-                # set default retry delay
+                # Set default retry delay.
                 err_delay = self.retry_delay
 
-                # retry non-fatal whitelisted error requests
+                # Retry non-fatal whitelisted error requests.
                 if s_json['ret_code'] in self.retry_codes:
 
                     # 10002, recv_window error; add 2.5 seconds and retry.
@@ -1376,15 +1458,21 @@ class HTTP:
                     # 10006, ratelimit error; wait until rate_limit_reset_ms
                     # and retry.
                     elif s_json['ret_code'] == 10006:
-                        self.logger.error(f'{error_msg}. Ratelimited on current request. '
-                                          f'Sleeping, then trying again. Request: {path}')
+                        self.logger.error(
+                            f'{error_msg}. Ratelimited on current request. '
+                            f'Sleeping, then trying again. Request: {path}'
+                        )
 
-                        # calculate how long we need to wait.
+                        # Calculate how long we need to wait.
                         limit_reset = s_json['rate_limit_reset_ms'] / 1000
-                        reset_str = time.strftime("%X", time.localtime(limit_reset))
+                        reset_str = time.strftime(
+                            '%X', time.localtime(limit_reset)
+                        )
                         err_delay = int(limit_reset) - int(time.time())
-                        error_msg =(f'Ratelimit will reset at {reset_str}. '
-                                    f'Sleeping for {err_delay} seconds')
+                        error_msg = (
+                            f'Ratelimit will reset at {reset_str}. '
+                            f'Sleeping for {err_delay} seconds'
+                        )
 
                     # Log the error.
                     self.logger.error(f'{error_msg}. {retries_remaining}')
@@ -1393,6 +1481,7 @@ class HTTP:
 
                 else:
                     raise InvalidRequestError(
+                        request=f'{method} {path}: {req_params}',
                         message=s_json["ret_msg"],
                         status_code=s_json["ret_code"],
                         time=dt.utcnow().strftime("%H:%M:%S")
@@ -1471,7 +1560,7 @@ class WebSocket:
             datefmt='%Y-%m-%d %H:%M:%S'
         )
         self.logger = logging.getLogger(__name__)
-        self.logger.info(f'Initializing {self.wsName} WebSocket.')
+        self.logger.debug(f'Initializing {self.wsName} WebSocket.')
 
         # Ensure authentication for private topics.
         if any(i in subscriptions for i in [
@@ -1663,13 +1752,13 @@ class WebSocket:
 
                     # If we get succesful auth, notify user.
                     if msg_json['request']['op'] == 'auth':
-                        self.logger.info('Authorization successful.')
+                        self.logger.debug('Authorization successful.')
                         self.auth = True
 
                     # If we get successful subscription, notify user.
                     if msg_json['request']['op'] == 'subscribe':
                         sub = msg_json['request']['args']
-                        self.logger.info(f'Subscription to {sub} successful.')
+                        self.logger.debug(f'Subscription to {sub} successful.')
             else:
                 response = msg_json['ret_msg']
                 if 'unknown topic' in response:
@@ -1678,7 +1767,7 @@ class WebSocket:
 
                 # If we get unsuccesful auth, notify user.
                 elif msg_json['request']['op'] == 'auth':
-                    self.logger.info('Authorization failed. Please check your '
+                    self.logger.debug('Authorization failed. Please check your '
                                      'API keys and restart.')
 
         elif 'topic' in msg_json:
@@ -1804,7 +1893,7 @@ class WebSocket:
         """
         Log WS close.
         """
-        self.logger.info(f'WebSocket {self.wsName} closed.')
+        self.logger.debug(f'WebSocket {self.wsName} closed.')
 
     def _reset(self):
         """
