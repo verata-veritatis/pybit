@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.1.16] - 2020-03-21
+## [1.1.15] - 2020-03-21
 
 ### Added
 
@@ -17,11 +17,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `endpoint` on `HTTP` will now default to https://api.bybit.com if no argument.
 - `retry_codes` is now user-definable in the `HTTP` arguments.
 - All logging is now on `DEBUG` level—user will need to manually set `logging_level` to `DEBUG`.
-
-## [1.1.15] - 2020-02-08
-
-### Modified
-
 - Added attempted request to `FailedRequestError` and `InvalidRequestError` for improved error logging.
 
 ## [1.1.14] - 2020-02-06
