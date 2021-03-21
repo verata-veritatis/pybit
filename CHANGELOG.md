@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Modified
 
+- Removed extra suffix definition block in `place_conditional_order`.
+- Changed logger functionality so that it won't overwrite user's preferred logging settings.
 - Fixed wrong number of arguments error inside websocket `on_message`, `on_close`, `on_open`, `on_error`.
 
 ## [1.1.16] - 2020-03-21
