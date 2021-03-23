@@ -35,7 +35,7 @@ except ImportError:
     from json.decoder import JSONDecodeError
 
 # Versioning.
-VERSION = '1.1.17'
+VERSION = '1.1.18'
 
 
 class HTTP:
@@ -73,8 +73,11 @@ class HTTP:
     :param force_retry: Whether or not pybit should retry a timed-out request.
     :type force_retry: bool
 
-    :param retry_codes: A list of non-fatal retry codes to retry on.
+    :param retry_codes: A list of non-fatal status codes to retry on.
     :type retry_codes: set
+
+    :param ignore_codes: A list of non-fatal status codes to ignore.
+    :type ignore_codes: set
 
     :param max_retries: The number of times to re-attempt a request.
     :type max_retries: int
@@ -94,8 +97,8 @@ class HTTP:
     def __init__(self, endpoint=None, api_key=None, api_secret=None,
                  logging_level=logging.INFO, log_requests=False,
                  request_timeout=10, recv_window=5000, force_retry=False,
-                 retry_codes=None, max_retries=3, retry_delay=3,
-                 referral_id=None):
+                 retry_codes=None, ignore_codes=None, max_retries=3,
+                 retry_delay=3, referral_id=None):
         """Initializes the HTTP class."""
 
         # Set the endpoint.
@@ -132,11 +135,17 @@ class HTTP:
         self.max_retries = max_retries
         self.retry_delay = retry_delay
 
-        # Set whitelist of non-fatal Bybit return error codes to retry
+        # Set whitelist of non-fatal Bybit status codes to retry on.
         if retry_codes is None:
             self.retry_codes = {10002, 10006, 30034, 30035, 130035, 130150}
         else:
             self.retry_codes = retry_codes
+
+        # Set whitelist of non-fatal Bybit status codes to ignore.
+        if ignore_codes is None:
+            self.ignore_codes = set()
+        else:
+            self.ignore_codes = ignore_codes
 
         # Initialize requests session.
         self.client = requests.Session()
@@ -1480,6 +1489,9 @@ class HTTP:
                     self.logger.error(f'{error_msg}. {retries_remaining}')
                     time.sleep(err_delay)
                     continue
+
+                elif s_json['ret_code'] in self.ignore_codes:
+                    pass
 
                 else:
                     raise InvalidRequestError(
