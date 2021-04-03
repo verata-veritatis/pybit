@@ -410,9 +410,9 @@ class HTTP:
         if kwargs.get('symbol', '').endswith('USDT'):
             suffix = '/private/linear/order/list'
         elif kwargs.get('symbol', '')[-2:].isdigit():
-            suffix = '/v2/private/order/list'
-        else:
             suffix = '/futures/private/order/list'
+        else:
+            suffix = '/v2/private/order/list'
 
         return self._submit_request(
             method='GET',
