@@ -44,8 +44,9 @@ client = pybit.HTTP(...)
 ws = pybit.WebSocket(...)
 """
 
-# Define your endpoint URL and subscriptions.
-endpoint = 'wss://stream.bybit.com/realtime'
+# Define your endpoint URLs and subscriptions.
+endpoint_public = 'wss://stream.bybit.com/realtime_public'
+endpoint_private = 'wss://stream.bybit.com/realtime_private'
 subs = [
     'orderBookL2_25.BTCUSD',
     'instrument_info.100ms.BTCUSD',
@@ -53,11 +54,11 @@ subs = [
 ]
 
 # Connect without authentication!
-ws_unauth = WebSocket(endpoint, subscriptions=subs)
+ws_unauth = WebSocket(endpoint_public, subscriptions=subs)
 
 # Connect with authentication!
 ws_auth = WebSocket(
-    endpoint,
+    endpoint_private,
     subscriptions=['position'],
     api_key='...',
     api_secret='...'
