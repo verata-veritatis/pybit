@@ -861,6 +861,8 @@ class HTTP:
     def set_leverage(self, **kwargs):
         """
         Change user leverage.
+        If you want to switch between cross margin and isolated margin, please
+        see cross_isolated_margin_switch.
 
         :param kwargs: See
             https://bybit-exchange.github.io/docs/linear/#t-setleverage.
