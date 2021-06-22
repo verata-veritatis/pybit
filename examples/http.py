@@ -12,11 +12,7 @@ exit()
 
 Public Methods:
 ------------------------
-get_orderbook()
-get_klines()
-get_tickers()
-get_trading_records()
-get_symbols()
+
 
 Private Methods:
 (requires authentication)
