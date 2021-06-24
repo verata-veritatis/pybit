@@ -227,7 +227,7 @@ class HTTP:
         at https://public.bybit.com/.
 
         :param kwargs: See
-            https://bybit-exchange.github.io/docs/inverse/#t-latestsymbolinfo.
+            https://bybit-exchange.github.io/docs/inverse/#t-publictradingrecords.
         :returns: Request results as dictionary.
         """
 
