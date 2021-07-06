@@ -1545,7 +1545,9 @@ class WebSocket:
 
         :returns: WebSocket session.
         """
-
+        self.callback = None
+        self.orderbookTimestamp = {} #SymbolName as Index
+        self.symbolTimestamp = {} #SymbolName as Index
         if not subscriptions:
             raise Exception('Subscription list cannot be empty!')
 
@@ -1796,6 +1798,9 @@ class WebSocket:
 
             # If incoming 'orderbookL2' data.
             if 'orderBook' in topic:
+                if 'timestamp_e6' in msg_json:
+                    symbolName = topic.split('.')[-1]
+                    self.orderbookTimestamp[symbolName] = float(msg_json['timestamp_e6']) / 1e6
 
                 # Make updates according to delta response.
                 if 'delta' in msg_json['type']:
@@ -1863,7 +1868,9 @@ class WebSocket:
 
             # If incoming 'instrument_info' data.
             elif 'instrument_info' in topic:
-
+                if 'timestamp_e6' in msg_json:
+                    symbolName = topic.split('.')[-1]
+                    self.symbolTimestamp[symbolName] = float(msg_json['timestamp_e6']) / 1e6
                 # Make updates according to delta response.
                 if 'delta' in msg_json['type']:
                     for i in msg_json['data']['update'][0]:
@@ -1892,6 +1899,16 @@ class WebSocket:
                     # For non-linear tickers...
                     else:
                         self.data[topic][p['symbol']] = p
+                        
+            if self.callback is not None:
+                try:
+                    self.callback(topic)
+                except:
+                    #probably use the intented logging system.
+                    print("Callback raised an exception for topic", topic)
+                    print("If this is intended, please use your own try/except block - otherwise have fun debugging :-)")
+
+
 
     def _on_error(self, error):
         """
