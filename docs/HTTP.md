@@ -348,7 +348,7 @@ def position_mode_switch(self, **kwargs):
     simultaneously.
 
     :param kwargs: See
-        https://bybit-exchange.github.io/docs/inverse_futures/#t-switchmode.
+        https://bybit-exchange.github.io/docs/inverse/#t-switchpositionmode.
     :returns: Request results as dictionary.
     """
 
