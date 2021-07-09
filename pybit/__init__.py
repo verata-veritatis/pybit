@@ -915,13 +915,18 @@ class HTTP:
         simultaneously.
 
         :param kwargs: See
-            https://bybit-exchange.github.io/docs/inverse_futures/#t-switchmode.
+            https://bybit-exchange.github.io/docs/inverse/#t-switchpositionmode.
         :returns: Request results as dictionary.
         """
 
+        if kwargs.get('symbol', '')[-2:].isdigit():
+            suffix = '/futures/private/position/switch-mode'
+        else:
+            suffix = '/v2/private/position/switch-mode'
+
         return self._submit_request(
             method='POST',
-            path=self.endpoint + '/futures/private/position/switch-mode',
+            path=self.endpoint + suffix,
             query=kwargs,
             auth=True
         )
