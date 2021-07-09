@@ -12,11 +12,19 @@ exit()
 
 Public Methods:
 ------------------------
-get_orderbook()
-get_klines()
-get_tickers()
-get_trading_records()
-get_symbols()
+orderbook()
+query_kline()
+latest_information_for_symbol()
+public_trading_records()
+query_symbol()
+liquidated_orders()
+query_mark_price_kline()
+query_index_price_kline()
+query_premium_index_kline()
+open_interest()
+latest_big_deal()
+long_short_ratio()
+get_the_last_funding_rate()
 
 Private Methods:
 (requires authentication)
@@ -37,6 +45,9 @@ query_conditional_order()
 
 user_leverage()
 change_user_leverage()
+cross_isolated_margin_switch()
+position_mode_switch()
+full_partial_position_tp_sl_switch()
 
 my_position()
 change_margin()
@@ -45,7 +56,6 @@ set_trading_stop()
 get_risk_limit()
 set_risk_limit()
 
-get_last_funding_rate()
 my_last_funding_fee()
 predicted_funding_rate()
 

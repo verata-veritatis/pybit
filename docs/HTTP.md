@@ -67,6 +67,23 @@ def query_mark_price_kline(self, **kwargs):
     :returns: Request results as dictionary.
     """
 
+def query_index_price_kline(self, **kwargs):
+    """
+    Query index price kline (like query_kline but for index price).
+    :param kwargs: See
+        https://bybit-exchange.github.io/docs/inverse/#t-queryindexpricekline.
+    :returns: Request results as dictionary.
+    """
+
+def query_premium_index_kline(self, **kwargs):
+    """
+    Query premium index kline (like query_kline but for the premium index
+    discount).
+    :param kwargs: See
+        https://bybit-exchange.github.io/docs/inverse/#t-querypremiumindexkline.
+    :returns: Request results as dictionary.
+    """
+
 def open_interest(self, **kwargs):
     """
     Gets the total amount of unsettled contracts. In other words, the total
@@ -315,14 +332,34 @@ def set_leverage(self, **kwargs):
 
 def cross_isolated_margin_switch(self, **kwargs):
     """
-    For linear markets only. Switch Cross/Isolated; must be leverage value
-    when switching from Cross to Isolated.
+    Switch Cross/Isolated; must be leverage value when switching from Cross
+    to Isolated.
 
     :param kwargs: See
-        https://bybit-exchange.github.io/docs/linear/#t-marginswitch.
+        https://bybit-exchange.github.io/docs/inverse/#t-marginswitch.
     :returns: Request results as dictionary.
     """
 
+def position_mode_switch(self, **kwargs):
+    """
+    If you are in One-Way Mode, you can only open one position on Buy or
+    Sell side;
+    If you are in Hedge Mode, you can open both Buy and Sell side positions
+    simultaneously.
+
+    :param kwargs: See
+        https://bybit-exchange.github.io/docs/inverse/#t-switchpositionmode.
+    :returns: Request results as dictionary.
+    """
+
+def full_partial_position_tp_sl_switch(self, **kwargs):
+    """
+    Switch mode between Full or Partial
+
+    :param kwargs: See
+        https://bybit-exchange.github.io/docs/inverse/#t-switchmode.
+    :returns: Request results as dictionary.
+    """
 
 def change_margin(self, **kwargs):
     """
@@ -389,12 +426,12 @@ def closed_profit_and_loss(self, **kwargs):
     :returns: Request results as dictionary.
     """
 
-def get_risk_limit(self, is_linear=False):
+def get_risk_limit(self, **kwargs):
     """
     Get risk limit.
 
-    :param is_linear: True for linear, False for inverse. Defaults to
-        False.
+    :param kwargs: See
+        https://bybit-exchange.github.io/docs/inverse/#t-getrisklimit.
     :returns: Request results as dictionary.
     """
 

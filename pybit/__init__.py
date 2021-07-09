@@ -35,7 +35,7 @@ except ImportError:
     from json.decoder import JSONDecodeError
 
 # Versioning.
-VERSION = '1.1.19'
+VERSION = '1.2.0'
 
 
 class HTTP:
@@ -227,7 +227,7 @@ class HTTP:
         at https://public.bybit.com/.
 
         :param kwargs: See
-            https://bybit-exchange.github.io/docs/inverse/#t-latestsymbolinfo.
+            https://bybit-exchange.github.io/docs/inverse/#t-publictradingrecords.
         :returns: Request results as dictionary.
         """
 
@@ -298,6 +298,57 @@ class HTTP:
             suffix = '/public/linear/mark-price-kline'
         else:
             suffix = '/v2/public/mark-price-kline'
+
+        return self._submit_request(
+            method='GET',
+            path=self.endpoint + suffix,
+            query=kwargs
+        )
+
+    def query_index_price_kline(self, **kwargs):
+        """
+        Query index price kline (like query_kline but for index price).
+
+        :param kwargs: See
+            https://bybit-exchange.github.io/docs/inverse/#t-queryindexpricekline.
+        :returns: Request results as dictionary.
+        """
+
+        # Replace query param 'from_time' since 'from' keyword is reserved.
+        # Temporary workaround until Bybit updates official request params
+        if 'from_time' in kwargs:
+            kwargs['from'] = kwargs.pop('from_time')
+
+        if kwargs.get('symbol', '').endswith('USDT'):
+            suffix = '/public/linear/index-price-kline'
+        else:
+            suffix = '/v2/public/index-price-kline'
+
+        return self._submit_request(
+            method='GET',
+            path=self.endpoint + suffix,
+            query=kwargs
+        )
+
+    def query_premium_index_kline(self, **kwargs):
+        """
+        Query premium index kline (like query_kline but for the premium index
+        discount).
+
+        :param kwargs: See
+            https://bybit-exchange.github.io/docs/inverse/#t-querypremiumindexkline.
+        :returns: Request results as dictionary.
+        """
+
+        # Replace query param 'from_time' since 'from' keyword is reserved.
+        # Temporary workaround until Bybit updates official request params
+        if 'from_time' in kwargs:
+            kwargs['from'] = kwargs.pop('from_time')
+
+        if kwargs.get('symbol', '').endswith('USDT'):
+            suffix = '/public/linear/premium-index-kline'
+        else:
+            suffix = '/v2/public/premium-index-kline'
 
         return self._submit_request(
             method='GET',
@@ -810,6 +861,8 @@ class HTTP:
     def set_leverage(self, **kwargs):
         """
         Change user leverage.
+        If you want to switch between cross margin and isolated margin, please
+        see cross_isolated_margin_switch.
 
         :param kwargs: See
             https://bybit-exchange.github.io/docs/linear/#t-setleverage.
@@ -832,18 +885,20 @@ class HTTP:
 
     def cross_isolated_margin_switch(self, **kwargs):
         """
-        For linear markets only. Switch Cross/Isolated; must be leverage value
-        when switching from Cross to Isolated.
+        Switch Cross/Isolated; must be leverage value when switching from Cross
+        to Isolated.
 
         :param kwargs: See
-            https://bybit-exchange.github.io/docs/linear/#t-marginswitch.
+            https://bybit-exchange.github.io/docs/inverse/#t-marginswitch.
         :returns: Request results as dictionary.
         """
 
         if kwargs.get('symbol', '').endswith('USDT'):
             suffix = '/private/linear/position/switch-isolated'
+        elif kwargs.get('symbol', '')[-2:].isdigit():
+            suffix = '/futures/private/position/switch-isolated'
         else:
-            suffix = '/futures/private/position/switch-mode'
+            suffix = '/v2/private/position/switch-isolated'
 
         return self._submit_request(
             method='POST',
@@ -854,17 +909,46 @@ class HTTP:
 
     def position_mode_switch(self, **kwargs):
         """
-        For futures markets only. Switch Cross/Isolated; must set leverage
-        value when switching from Cross to Isolated.
+        If you are in One-Way Mode, you can only open one position on Buy or
+        Sell side;
+        If you are in Hedge Mode, you can open both Buy and Sell side positions
+        simultaneously.
 
         :param kwargs: See
-            https://bybit-exchange.github.io/docs/inverse_futures/#t-marginswitch.
+            https://bybit-exchange.github.io/docs/inverse/#t-switchpositionmode.
         :returns: Request results as dictionary.
         """
 
+        if kwargs.get('symbol', '')[-2:].isdigit():
+            suffix = '/futures/private/position/switch-mode'
+        else:
+            suffix = '/v2/private/position/switch-mode'
+
         return self._submit_request(
             method='POST',
-            path=self.endpoint + '/futures/private/position/switch-mode',
+            path=self.endpoint + suffix,
+            query=kwargs,
+            auth=True
+        )
+
+    def full_partial_position_tp_sl_switch(self, **kwargs):
+        """
+        Switch mode between Full or Partial
+
+        :param kwargs: See
+            https://bybit-exchange.github.io/docs/inverse/#t-switchmode.
+        :returns: Request results as dictionary.
+        """
+        if kwargs.get('symbol', '').endswith('USDT'):
+            suffix = '/private/linear/tpsl/switch-mode'
+        elif kwargs.get('symbol', '')[-2:].isdigit():
+            suffix = '/futures/private/tpsl/switch-mode'
+        else:
+            suffix = '/v2/private/tpsl/switch-mode'
+
+        return self._submit_request(
+            method='POST',
+            path=self.endpoint + suffix,
             query=kwargs,
             auth=True
         )
@@ -1014,23 +1098,27 @@ class HTTP:
             auth=True
         )
 
-    def get_risk_limit(self, is_linear=False):
+    def get_risk_limit(self, **kwargs):
         """
         Get risk limit.
 
-        :param is_linear: True for linear, False for inverse. Defaults to
-            False.
+        :param kwargs: See
+            https://bybit-exchange.github.io/docs/inverse/#t-getrisklimit.
         :returns: Request results as dictionary.
         """
 
-        if is_linear:
+        if kwargs.get('is_linear') in (False, True):
+            self.logger.warning("The is_linear argument is obsolete.")
+
+        if kwargs.get('symbol', '').endswith('USDT'):
             suffix = '/public/linear/risk-limit'
         else:
-            suffix = '/open-api/wallet/risk-limit/list'
+            suffix = '/v2/public/risk-limit/list'
 
         return self._submit_request(
             method='GET',
             path=self.endpoint + suffix,
+            query=kwargs,
             auth=True
         )
 
@@ -1043,9 +1131,14 @@ class HTTP:
         :returns: Request results as dictionary.
         """
 
+        if kwargs.get('symbol', '').endswith('USDT'):
+            suffix = '/private/linear/position/set-risk'
+        else:
+            suffix = '/v2/private/position/risk-limit'
+
         return self._submit_request(
             method='POST',
-            path=self.endpoint + '/open-api/wallet/risk-limit',
+            path=self.endpoint + suffix,
             query=kwargs,
             auth=True
         )
@@ -1064,7 +1157,7 @@ class HTTP:
         if kwargs.get('symbol', '').endswith('USDT'):
             suffix = '/public/linear/funding/prev-funding-rate'
         else:
-            suffix = '/v2/private/funding/prev-funding-rate'
+            suffix = '/v2/public/funding/prev-funding-rate'
 
         return self._submit_request(
             method='GET',
