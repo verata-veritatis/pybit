@@ -23,6 +23,7 @@ import threading
 import requests
 import websocket
 
+from typing import Dict
 from datetime import datetime as dt
 from concurrent.futures import ThreadPoolExecutor
 
@@ -818,25 +819,25 @@ class HTTP:
             auth=True
         )
 
-    def my_position(self, **kwargs):
+    def my_position(self, section, **kwargs) -> Dict:
         """
         Get my position list.
-
+        
+        :param section: Allow to choose exchange section(inverse - Inverse Perpetual,
+                                                         usdt - USDT Perpetual,
+                                                         futures - Inverse Futures)
         :param kwargs: See
             https://bybit-exchange.github.io/docs/inverse/#t-myposition.
         :returns: Request results as dictionary.
         """
 
-        if kwargs.get('symbol', '').endswith('USDT'):
-            suffix = '/private/linear/position/list'
-        elif kwargs.get('symbol', '')[-2:].isdigit():
-            suffix = '/futures/private/position/list'
-        else:
-            suffix = '/v2/private/position/list'
+        sections = {'inverse': '/v2/private/position/list',
+                    'usdt': '/private/linear/position/list',
+                    'futures': '/futures/private/position/list'}
 
         return self._submit_request(
             method='GET',
-            path=self.endpoint + suffix,
+            path=self.endpoint + sections[section],
             query=kwargs,
             auth=True
         )
