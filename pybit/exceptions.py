@@ -18,6 +18,10 @@ class FailedRequestError(Exception):
             f'.\nRequest → {request}.'
         )
 
+    def __reduce__(self):
+        return self.__class__, (self.request, self.message, self.status_code,
+                                self.time)
+
 
 class InvalidRequestError(Exception):
     """
@@ -38,3 +42,7 @@ class InvalidRequestError(Exception):
             f'{message.capitalize()} (ErrCode: {status_code}) (ErrTime: {time})'
             f'.\nRequest → {request}.'
         )
+
+    def __reduce__(self):
+        return self.__class__, (self.request, self.message, self.status_code,
+                                self.time)
