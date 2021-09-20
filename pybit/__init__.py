@@ -1382,7 +1382,83 @@ class HTTP:
 
         # Submit a market order against each open position for the same qty.
         return self.place_active_order_bulk(orders)
+    '''
+    Below are methods under https://bybit-exchange.github.io/docs/account_asset
+    '''
+    def create_internal_transfer(self, **kwargs):
+        """
+        Create internal transfer. For more information, see
+        https://bybit-exchange.github.io/docs/account_asset/#t-transfer
+        """
 
+        suffix="/asset/v1/private/transfer"
+
+        return self._submit_request(
+            method='POST',
+            path=self.endpoint + suffix,
+            query=kwargs,
+            auth=True
+        )
+
+    def create_subaccount_transfer(self, **kwargs):
+        """
+        Create internal transfer. For more information, see
+        https://bybit-exchange.github.io/docs/account_asset/#t-transfer
+        """
+
+        suffix="/asset/v1/private/sub-member/transfer"
+
+        return self._submit_request(
+            method='POST',
+            path=self.endpoint + suffix,
+            query=kwargs,
+            auth=True
+        )
+
+    def query_transfer_list(self, **kwargs):
+        """
+        Create internal transfer. For more information, see
+        https://bybit-exchange.github.io/docs/account_asset/#t-transfer
+        """
+
+        suffix="/asset/v1/private/transfer/list"
+
+        return self._submit_request(
+            method='GET',
+            path=self.endpoint + suffix,
+            query=kwargs,
+            auth=True
+        )
+
+    def query_subaccount_list(self):
+        """
+        Create internal transfer. For more information, see
+        https://bybit-exchange.github.io/docs/account_asset/#t-transfer
+        """
+
+        suffix="/asset/v1/private/sub-member/member-ids"
+
+        return self._submit_request(
+            method='GET',
+            path=self.endpoint + suffix,
+            query={},
+            auth=True
+        )
+
+    def query_subaccount_transfer_list(self,**kwargs):
+        """
+        Create internal transfer. For more information, see
+        https://bybit-exchange.github.io/docs/account_asset/#t-transfer
+        """
+
+        suffix="/asset/v1/private/sub-member/transfer/list"
+
+        return self._submit_request(
+            method='GET',
+            path=self.endpoint + suffix,
+            query=kwargs,
+            auth=True
+        )
     '''
     Internal methods; signature and request submission.
     For more information about the request signature, see
