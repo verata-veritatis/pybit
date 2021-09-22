@@ -1392,13 +1392,15 @@ class HTTP:
         """
 
         suffix="/asset/v1/private/transfer"
-
-        return self._submit_request(
-            method='POST',
-            path=self.endpoint + suffix,
-            query=kwargs,
-            auth=True
-        )
+        if self._verify_string(kwargs,'amount'):
+            return self._submit_request(
+                method='POST',
+                path=self.endpoint + suffix,
+                query=kwargs,
+                auth=True
+            )
+        else:
+            self.logger.error('amount must be in string format')
 
     def create_subaccount_transfer(self, **kwargs):
         """
@@ -1408,12 +1410,15 @@ class HTTP:
 
         suffix="/asset/v1/private/sub-member/transfer"
 
-        return self._submit_request(
-            method='POST',
-            path=self.endpoint + suffix,
-            query=kwargs,
-            auth=True
-        )
+        if self._verify_string(kwargs, 'amount'):
+            return self._submit_request(
+                method='POST',
+                path=self.endpoint + suffix,
+                query=kwargs,
+                auth=True
+            )
+        else:
+            self.logger.error('amount must be in string format')
 
     def query_transfer_list(self, **kwargs):
         """
@@ -1503,6 +1508,14 @@ class HTTP:
             bytes(api_secret, 'utf-8'),
             bytes(_val, 'utf-8'), digestmod='sha256'
         ).hexdigest())
+
+    def _verify_string(self,params,key):
+        if key in params:
+            if not isinstance(params[key], str):
+                return False
+            else:
+                return True
+        return True
 
     def _submit_request(self, method=None, path=None, query=None, auth=False):
         """
