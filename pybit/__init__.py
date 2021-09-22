@@ -98,7 +98,7 @@ class HTTP:
                  logging_level=logging.INFO, log_requests=False,
                  request_timeout=10, recv_window=5000, force_retry=False,
                  retry_codes=None, ignore_codes=None, max_retries=3,
-                 retry_delay=3, referral_id=None):
+                 retry_delay=3, referral_id=None, spot=False):
         """Initializes the HTTP class."""
 
         # Set the endpoint.
@@ -161,6 +161,9 @@ class HTTP:
         if referral_id:
             self.client.headers.update({'Referer': referral_id})
 
+        # If True, calls spot endpoints rather than futures endpoints.
+        self.spot = spot
+
     def _exit(self):
         """Closes the request session."""
         self.client.close()
@@ -175,9 +178,20 @@ class HTTP:
         :returns: Request results as dictionary.
         """
 
+        if self.spot is True or kwargs.get('spot', '') is True:
+            suffix = '/spot/quote/v1/depth'
+        else:
+            suffix = '/v2/public/orderBook/L2'
         return self._submit_request(
             method='GET',
-            path=self.endpoint + '/v2/public/orderBook/L2',
+            path=self.endpoint + suffix,
+            query=kwargs
+        )
+
+    def merged_orderbook(self, **kwargs):
+        return self._submit_request(
+            method='GET',
+            path=self.endpoint + '/spot/quote/v1/depth/merged',
             query=kwargs
         )
 
@@ -195,7 +209,9 @@ class HTTP:
         if 'from_time' in kwargs:
             kwargs['from'] = kwargs.pop('from_time')
 
-        if kwargs.get('symbol', '').endswith('USDT'):
+        if self.spot is True or kwargs.get('spot', '') is True:
+            suffix = '/spot/quote/v1/kline'
+        elif kwargs.get('symbol', '').endswith('USDT'):
             suffix = '/public/linear/kline'
         else:
             suffix = '/v2/public/kline/list'
@@ -215,9 +231,27 @@ class HTTP:
         :returns: Request results as dictionary.
         """
 
+        if self.spot is True or kwargs.get('spot', '') is True:
+            suffix = '/spot/quote/v1/ticker/24hr'
+        else:
+            suffix = '/v2/public/tickers'
         return self._submit_request(
             method='GET',
-            path=self.endpoint + '/v2/public/tickers',
+            path=self.endpoint + suffix,
+            query=kwargs
+        )
+
+    def last_traded_price(self, **kwargs):
+        return self._submit_request(
+            method='GET',
+            path=self.endpoint + '/spot/quote/v1/ticker/price',
+            query=kwargs
+        )
+
+    def best_bid_ask_price(self, **kwargs):
+        return self._submit_request(
+            method='GET',
+            path=self.endpoint + '/spot/quote/v1/ticker/book_ticker',
             query=kwargs
         )
 
@@ -236,7 +270,9 @@ class HTTP:
         if 'from_id' in kwargs:
             kwargs['from'] = kwargs.pop('from_id')
 
-        if kwargs.get('symbol', '').endswith('USDT'):
+        if self.spot is True or kwargs.get('spot', '') is True:
+            suffix = '/spot/quote/v1/trades'
+        elif kwargs.get('symbol', '').endswith('USDT'):
             suffix = '/public/linear/recent-trading-records'
         else:
             suffix = '/v2/public/trading-records'
@@ -247,16 +283,20 @@ class HTTP:
             query=kwargs
         )
 
-    def query_symbol(self):
+    def query_symbol(self, **kwargs):
         """
         Get symbol info.
 
         :returns: Request results as dictionary.
         """
 
+        if self.spot is True or kwargs.get('spot', '') is True:
+            suffix = '/spot/v1/symbols'
+        else:
+            suffix = '/v2/public/symbols'
         return self._submit_request(
             method='GET',
-            path=self.endpoint + '/v2/public/symbols'
+            path=self.endpoint + suffix
         )
 
     def liquidated_orders(self, **kwargs):
@@ -412,7 +452,9 @@ class HTTP:
         :returns: Request results as dictionary.
         """
 
-        if kwargs.get('symbol', '').endswith('USDT'):
+        if self.spot is True or kwargs.get('spot', '') is True:
+            suffix = '/spot/v1/order'
+        elif kwargs.get('symbol', '').endswith('USDT'):
             suffix = '/private/linear/order/create'
         elif kwargs.get('symbol', '')[-2:].isdigit():
             suffix = '/futures/private/order/create'
@@ -482,7 +524,11 @@ class HTTP:
         :returns: Request results as dictionary.
         """
 
-        if kwargs.get('symbol', '').endswith('USDT'):
+        method = 'POST'
+        if self.spot is True or kwargs.get('spot', '') is True:
+            suffix = '/spot/v1/order'
+            method = 'DELETE'
+        elif kwargs.get('symbol', '').endswith('USDT'):
             suffix = '/private/linear/order/cancel'
         elif kwargs.get('symbol', '')[-2:].isdigit():
             suffix = '/futures/private/order/cancel'
@@ -490,10 +536,17 @@ class HTTP:
             suffix = '/v2/private/order/cancel'
 
         return self._submit_request(
-            method='POST',
+            method=method,
             path=self.endpoint + suffix,
             query=kwargs,
             auth=True
+        )
+
+    def fast_cancel_active_order(self, **kwargs):
+        return self._submit_request(
+            method='DELETE',
+            path=self.endpoint + '/spot/v1/order/fast',
+            query=kwargs
         )
 
     def cancel_active_order_bulk(self, orders: list, max_in_parallel=10):
@@ -538,6 +591,30 @@ class HTTP:
         return self._submit_request(
             method='POST',
             path=self.endpoint + suffix,
+            query=kwargs,
+            auth=True
+        )
+
+    def batch_cancel_orders(self, **kwargs):
+        return self._submit_request(
+            method='DELETE',
+            path=self.endpoint + '/spot/order/batch-cancel',
+            query=kwargs,
+            auth=True
+        )
+
+    def batch_fast_cancel_orders(self, **kwargs):
+        return self._submit_request(
+            method='DELETE',
+            path=self.endpoint + '/spot/order/batch-fast-cancel',
+            query=kwargs,
+            auth=True
+        )
+
+    def batch_cancel_order_by_ids(self, **kwargs):
+        return self._submit_request(
+            method='DELETE',
+            path=self.endpoint + '/spot/order/batch-cancel-by-ids',
             query=kwargs,
             auth=True
         )
@@ -596,7 +673,12 @@ class HTTP:
         :returns: Request results as dictionary.
         """
 
-        if kwargs.get('symbol', '').endswith('USDT'):
+        if self.spot is True or kwargs.get('spot', '') is True:
+            if kwargs.get('orderId', '') or kwargs.get('orderLinkId', ''):
+                suffix = '/spot/v1/order'
+            else:
+                suffix = '/spot/v1/open-orders'
+        elif kwargs.get('symbol', '').endswith('USDT'):
             suffix = '/private/linear/order/search'
         elif kwargs.get('symbol', '')[-2:].isdigit():
             suffix = '/futures/private/order'
@@ -1060,7 +1142,9 @@ class HTTP:
         :returns: Request results as dictionary.
         """
 
-        if kwargs.get('symbol', '').endswith('USDT'):
+        if self.spot is True or kwargs.get('spot', '') is True:
+            suffix = '/spot/v1/myTrades'
+        elif kwargs.get('symbol', '').endswith('USDT'):
             suffix = '/private/linear/trade/execution/list'
         elif kwargs.get('symbol', '')[-2:].isdigit():
             suffix = '/futures/private/execution/list'
@@ -1252,9 +1336,14 @@ class HTTP:
         :returns: Request results as dictionary.
         """
 
+        if self.spot is True or kwargs.get('spot', '') is True:
+            suffix = '/spot/v1/account'
+        else:
+            suffix = '/v2/private/wallet/balance'
+
         return self._submit_request(
             method='GET',
-            path=self.endpoint + '/v2/private/wallet/balance',
+            path=self.endpoint + suffix,
             query=kwargs,
             auth=True
         )
@@ -1314,16 +1403,21 @@ class HTTP:
             auth=True
         )
 
-    def server_time(self):
+    def server_time(self, **kwargs):
         """
         Get Bybit server time.
 
         :returns: Request results as dictionary.
         """
 
+        if self.spot is True or kwargs.get('spot', '') is True:
+            suffix = '/spot/v1/time'
+        else:
+            suffix = '/v2/public/time'
+
         return self._submit_request(
             method='GET',
-            path=self.endpoint + '/v2/public/time'
+            path=self.endpoint + suffix
         )
 
     def announcement(self):
@@ -1443,6 +1537,9 @@ class HTTP:
         # Store original recv_window.
         recv_window = self.recv_window
 
+        # Remove internal spot arg
+        query.pop('spot', '')
+
         # Bug fix: change floating whole numbers to integers to prevent
         # auth signature errors.
         if query is not None:
@@ -1469,7 +1566,6 @@ class HTTP:
 
             # Authenticate if we are using a private endpoint.
             if auth:
-
                 # Prepare signature.
                 signature = self._auth(
                     method=method,
@@ -1501,9 +1597,24 @@ class HTTP:
                     requests.Request(method, path, params=req_params)
                 )
             else:
-                r = self.client.prepare_request(
-                    requests.Request(method, path, data=json.dumps(req_params))
-                )
+                if 'spot' in path:
+                    full_param_str = '&'.join(
+                        [str(k) + '=' + str(v) for k, v in
+                         sorted(query.items()) if v is not None]
+                    )
+                    headers = {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    }
+                    r = self.client.prepare_request(
+                        requests.Request(method, path + f"?{full_param_str}",
+                                         headers=headers)
+                    )
+
+                else:
+                    r = self.client.prepare_request(
+                        requests.Request(method, path,
+                                         data=json.dumps(req_params))
+                    )
 
             # Attempt the request.
             try:
@@ -1639,23 +1750,50 @@ class WebSocket:
         :returns: WebSocket session.
         """
 
-        if not subscriptions:
-            raise Exception('Subscription list cannot be empty!')
+        self.spot = True if "spot" in endpoint else False
+        self.spot_unauth = True if [True for v in ['v1', 'v2'] if v in
+                                    endpoint] else False
+        self.spot_auth = True if "spot" in endpoint and not \
+            self.spot_unauth else False
+        if not self.spot_auth:
+            if not subscriptions:
+                raise Exception('Subscription list cannot be empty!')
+        if not self.spot:
+            # Require symbol on 'trade' topic.
+            if 'trade' in subscriptions:
+                raise Exception('\'trade\' requires a ticker, e.g. '
+                                '\'trade.BTCUSD\'.')
 
-        # Require symbol on 'trade' topic.
-        if 'trade' in subscriptions:
-            raise Exception('\'trade\' requires a ticker, e.g. '
-                            '\'trade.BTCUSD\'.')
+            # Require currency on 'insurance' topic.
+            if 'insurance' in subscriptions:
+                raise Exception('\'insurance\' requires a currency, e.g. '
+                                '\'insurance.BTC\'.')
 
-        # Require currency on 'insurance' topic.
-        if 'insurance' in subscriptions:
-            raise Exception('\'insurance\' requires a currency, e.g. '
-                            '\'insurance.BTC\'.')
+            # Require timeframe and ticker on 'klineV2' topic.
+            if 'klineV2' in subscriptions:
+                raise Exception('\'klineV2\' requires a timeframe and ticker, e.g.'
+                                ' \'klineV2.5.BTCUSD\'.')
 
-        # Require timeframe and ticker on 'klineV2' topic.
-        if 'klineV2' in subscriptions:
-            raise Exception('\'klineV2\' requires a timeframe and ticker, e.g.'
-                            ' \'klineV2.5.BTCUSD\'.')
+        # Check if subscriptions are in the correct format
+        if self.spot and not self.spot_auth:
+            for subscription in subscriptions:
+                if isinstance(subscription, str):
+                    try:
+                        subscriptions.pop(subscriptions.index(subscription))
+                        subscriptions.append(json.loads(subscription))
+                    except JSONDecodeError:
+                        raise Exception('Spot subscriptions should be dicts, '
+                                        'or strings that are valid JSONs.')
+        elif not self.spot:
+            for subscription in subscriptions:
+                if not isinstance(subscription, str):
+                    raise Exception('Futures subscriptions should be strings.')
+
+        for subscription in subscriptions:
+            if ('v2' in endpoint and 'symbol' in subscription) or \
+               ('v1' in endpoint and 'symbol' in subscription['params']):
+                raise Exception('Cannot subscribe to v1 topics with v2 '
+                                'endpoint, or vice versa.')
 
         # set websocket name for logging purposes
         self.wsName = 'Authenticated' if api_key else 'Non-Authenticated'
@@ -1676,7 +1814,7 @@ class WebSocket:
         self.logger.debug(f'Initializing {self.wsName} WebSocket.')
 
         # Ensure authentication for private topics.
-        if any(i in subscriptions for i in [
+        if not self.spot and any(i in subscriptions for i in [
             'position',
             'execution',
             'order',
@@ -1695,6 +1833,10 @@ class WebSocket:
 
         # Set topic subscriptions for WebSocket.
         self.subscriptions = subscriptions
+        # Checking if using auth spot connection.
+        if '/spot/ws' in self.endpoint:
+            self.subscriptions = ['outboundAccountInfo', 'executionReport',
+                                  'ticketInfo']
         self.max_length = max_data_length
 
         # Set ping settings.
@@ -1706,7 +1848,7 @@ class WebSocket:
         self.purge = purge_on_fetch
         self.trim = trim_data
 
-        # Set initial state, initialize dictionary and connnect.
+        # Set initial state, initialize dictionary and connect.
         self._reset()
         self._connect(self.endpoint)
 
@@ -1718,22 +1860,18 @@ class WebSocket:
         :returns: Filtered data as dict.
         """
 
-        # If topic isn't a string.
-        if not isinstance(topic, str):
-            self.logger.error('Topic argument must be a string.')
-            return
-
+        if self.spot and self.spot_unauth:
+            topic = self.conform_topic(topic)
         # If the topic given isn't in the initial subscribed list.
         if topic not in self.subscriptions:
             self.logger.error(f'You aren\'t subscribed to the {topic} topic.')
             return
 
         # Pop all trade or execution data on each poll.
-        # dont pop order or stop_order data as we will lose valuable state
-        if topic.startswith((
-                'trade',
-                'execution'
-        )) and not topic.startswith('orderBook'):
+        # don't pop order or stop_order data as we will lose valuable state
+        if any(i in topic for i in ['trade', 'execution']) \
+                and not topic.startswith('orderBook') and \
+                "executionReport" not in topic:
             data = self.data[topic].copy()
             if self.purge:
                 self.data[topic] = []
@@ -1820,23 +1958,53 @@ class WebSocket:
             raise websocket.WebSocketTimeoutException('Connection failed.')
 
         # If given an api_key, authenticate.
-        if self.api_key and self.api_secret:
+        if self.api_key and self.api_secret and not self.spot_unauth:
             self._auth()
 
         # Check if subscriptions is a list.
-        if isinstance(self.subscriptions, str):
+        if isinstance(self.subscriptions, (str, dict)):
             self.subscriptions = [self.subscriptions]
 
         # Subscribe to the requested topics.
-        self.ws.send(
-            json.dumps({
-                'op': 'subscribe',
-                'args': self.subscriptions
-            })
-        )
+        if not self.spot_auth and self.spot_unauth:
+            for subscription in self.subscriptions:
+                if not subscription.get('event'):
+                    subscription['event'] = 'sub'
+                if not subscription.get('params'):
+                    subscription['params'] = {}
+                    if 'v2' in self.endpoint:
+                        raise Exception('v2 spot websocket topics require the '
+                                        '"symbol" key within "params"')
+                if not subscription.get('binary') or \
+                        subscription['params'].get('binary'):
+                    subscription['params']['binary'] = False
+                self.ws.send(json.dumps(subscription))
+        elif not self.spot:
+            self.ws.send(
+                json.dumps({
+                    'op': 'subscribe',
+                    'args': self.subscriptions
+                })
+            )
 
         # Initialize the topics.
-        for topic in self.subscriptions:
+        if not self.spot_auth and self.spot:
+            # Strip the subscription dict
+            for subscription in self.subscriptions:
+                index = self.subscriptions.index(original_sub)
+                subscription = subscription if isinstance(subscription, dict) \
+                    else json.loads(subscription)
+                subscription.pop('event')
+                subscription['params']['binary'] = str(subscription['params'][
+                    'binary']).lower()
+                if subscription['params'].get('dumpScale'):
+                    subscription['params']['dumpScale'] = str(subscription[
+                        'params']['dumpScale'])
+                self.subscriptions[index] = \
+                    self.conform_topic(subscription)
+
+        topics = self.subscriptions
+        for topic in topics:
             if topic not in self.data:
                 self.data[topic] = {}
 
@@ -1856,36 +2024,55 @@ class WebSocket:
         # Load dict of message.
         msg_json = json.loads(message)
 
-        # If 'success' exists
-        if 'success' in msg_json:
-            if msg_json['success']:
+        # Did we receive a message regarding auth or subscription?
+        auth_message = True if isinstance(msg_json, dict) and \
+            (msg_json.get('auth') or
+             msg_json.get('request', {}).get('op') == 'auth') else False
+        subscription_message = True if isinstance(msg_json, dict) and \
+            ((msg_json.get('event') == 'sub' or msg_json.get('code')) or
+             msg_json.get('request', {}).get('op') == 'subscribe') else False
 
-                # If 'request' exists.
-                if 'request' in msg_json:
+        # Check auth
+        if auth_message:
+            # If we get successful futures/spot auth, notify user.
+            if msg_json.get('success') is True or \
+                    msg_json.get('auth') == 'success':
+                self.logger.debug('Authorization successful.')
+                self.auth = True
+            # If we get unsuccessful auth, notify user.
+            elif msg_json.get('auth') == 'fail' or \
+                    msg_json.get('success') is False:
+                self.logger.debug('Authorization failed. Please check your '
+                                  'API keys and restart.')
 
-                    # If we get succesful auth, notify user.
-                    if msg_json['request']['op'] == 'auth':
-                        self.logger.debug('Authorization successful.')
-                        self.auth = True
-
-                    # If we get successful subscription, notify user.
-                    if msg_json['request']['op'] == 'subscribe':
-                        sub = msg_json['request']['args']
-                        self.logger.debug(f'Subscription to {sub} successful.')
-            else:
+        # Check subscription
+        if subscription_message:
+            # If we get successful futures/spot subscription, notify user.
+            if msg_json.get('success') is True or \
+                    msg_json.get('msg') == 'Success':
+                sub = msg_json['topic'] if self.spot else msg_json[
+                    'request']['args']
+                self.logger.debug(f'Subscription to {sub} successful.')
+            # Futures subscription fail
+            elif msg_json.get('success') is False:
                 response = msg_json['ret_msg']
                 if 'unknown topic' in response:
                     self.logger.error('Couldn\'t subscribe to topic.'
                                       f' Error: {response}.')
-
-                # If we get unsuccesful auth, notify user.
-                elif msg_json['request']['op'] == 'auth':
-                    self.logger.debug('Authorization failed. Please check your '
-                                     'API keys and restart.')
+            # Spot subscription fail
+            elif msg_json.get('code'):
+                self.logger.error('Couldn\'t subscribe to topic.'
+                                  f' Error code: {msg_json["code"]}.'
+                                  f' Error message: {msg_json.get("desc")}.')
 
         elif 'topic' in msg_json:
 
-            topic = msg_json['topic']
+            if self.spot:
+                # Conform received topic data so that we can match with our
+                # subscribed topic
+                topic = self.conform_topic(msg_json.copy())
+            else:
+                topic = msg_json['topic']
 
             # If incoming 'orderbookL2' data.
             if 'orderBook' in topic:
@@ -1915,10 +2102,47 @@ class WebSocket:
                         self.data[topic] = msg_json['data'] if self.trim else msg_json
                     #self.data[topic] = msg_json['data']
 
+            # If incoming 'diffDepth' data.
+            elif 'diffDepth' in topic:
+
+                book_sides = {'b': msg_json['data'][0]['b'],
+                              'a': msg_json['data'][0]['a']}
+
+                if not self.data[topic]:
+                    self.data[topic] = book_sides
+                    return
+
+                for side, entries in book_sides.items():
+                    for entry in entries:
+
+                        # Delete.
+                        if float(entry[1]) == 0:
+                            index = self._find_index(
+                                self.data[topic][side], entry, 0)
+                            self.data[topic][side].pop(index)
+                            continue
+
+                        # Insert.
+                        price_level_exists = entry[0] in \
+                            [level[0] for level in self.data[topic][side]]
+                        if not price_level_exists:
+                            self.data[topic][side].append(entry)
+                            continue
+
+                        # Update.
+                        qty_changed = entry[1] != next(
+                            level[1] for level in self.data[topic][side] if
+                            level[0] == entry[0])
+                        if price_level_exists and qty_changed:
+                            index = self._find_index(
+                                self.data[topic][side], entry, 0)
+                            self.data[topic][side][index] = entry
+                            continue
+
             # For incoming 'order' and 'stop_order' data.
             elif any(i in topic for i in ['order', 'stop_order']):
 
-                # record incoming data  
+                # record incoming data
                 for i in msg_json['data']:
                     try:
                         # update existing entries
@@ -1938,7 +2162,9 @@ class WebSocket:
 
                 # Keep appending or create new list if not already created.
                 try:
-                    for i in msg_json['data']:
+                    trades = [msg_json['data']] if isinstance(
+                        msg_json['data'], dict) else msg_json['data']
+                    for i in trades:
                         self.data[topic].append(i)
                 except AttributeError:
                     self.data[topic] = msg_json['data']
@@ -1947,12 +2173,17 @@ class WebSocket:
                 if len(self.data[topic]) > self.max_length:
                     self.data[topic].pop(0)
 
-            # If incoming 'insurance', 'klineV2', or 'wallet' data.
-            elif any(i in topic for i in ['insurance', 'klineV2', 'wallet',
-                                          'candle']):
+            # If incoming data is in a topic which only pushes messages in
+            # the snapshot format
+            elif any(i in topic for i in ['insurance', 'kline', 'wallet',
+                                          'candle', 'realtimes', '"depth"',
+                                          '"mergedDepth"', 'bookTicker']):
 
                 # Record incoming data.
-                self.data[topic] = msg_json['data'][0] if self.trim else msg_json
+                if 'v2' in self.endpoint:
+                    self.data[topic] = msg_json['data'] if self.trim else msg_json
+                else:
+                    self.data[topic] = msg_json['data'][0] if self.trim else msg_json
 
             # If incoming 'instrument_info' data.
             elif 'instrument_info' in topic:
@@ -1985,6 +2216,13 @@ class WebSocket:
                     # For non-linear tickers...
                     else:
                         self.data[topic][p['symbol']] = p
+
+        elif isinstance(msg_json, list):
+            for item in msg_json:
+                topic = item.get('e')
+                if any(i in topic for i in ['outboundAccountInfo',
+                                            'executionReport', 'ticketInfo']):
+                    self.data[topic].append(item)
 
     def _on_error(self, error):
         """
@@ -2019,3 +2257,26 @@ class WebSocket:
         self.exited = False
         self.auth = False
         self.data = {}
+
+    @staticmethod
+    def conform_topic(topic):
+        """
+        For spot API. Due to the fact that the JSON received in update
+        messages does not include a simple "topic" key, and parameters all
+        have their own separate keys, we need to compare the entire JSON.
+        Therefore, we need to strip the JSON of any unnecessary keys,
+        cast some values, and dump the JSON with sort_keys.
+        """
+        if isinstance(topic, str):
+            topic = json.loads(topic)
+        topic.pop('symbolName', '')
+        topic['params'].pop('realtimeInterval', '')
+        topic['params'].pop('symbolName', '')
+        if topic['params'].get('klineType'):
+            topic['topic'] += "_" + topic['params'].get('klineType')
+            topic['params'].pop('klineType')
+        topic.pop('data', '')
+        topic.pop('f', '')
+        topic.pop('sendTime', '')
+        topic.pop('shared', '')
+        return json.dumps(topic, sort_keys=True, separators=(',', ':'))
