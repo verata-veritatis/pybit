@@ -595,7 +595,7 @@ class HTTP:
             auth=True
         )
 
-    def batch_cancel_orders(self, **kwargs):
+    def batch_cancel_active_order(self, **kwargs):
         return self._submit_request(
             method='DELETE',
             path=self.endpoint + '/spot/order/batch-cancel',
@@ -603,7 +603,7 @@ class HTTP:
             auth=True
         )
 
-    def batch_fast_cancel_orders(self, **kwargs):
+    def batch_fast_cancel_active_order(self, **kwargs):
         return self._submit_request(
             method='DELETE',
             path=self.endpoint + '/spot/order/batch-fast-cancel',
@@ -611,7 +611,7 @@ class HTTP:
             auth=True
         )
 
-    def batch_cancel_order_by_ids(self, **kwargs):
+    def batch_cancel_active_order_by_ids(self, **kwargs):
         return self._submit_request(
             method='DELETE',
             path=self.endpoint + '/spot/order/batch-cancel-by-ids',
