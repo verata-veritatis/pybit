@@ -2080,7 +2080,7 @@ class WebSocket:
         if not self.spot_auth and self.spot:
             # Strip the subscription dict
             for subscription in self.subscriptions:
-                index = self.subscriptions.index(original_sub)
+                index = self.subscriptions.index(subscription)
                 subscription = subscription if isinstance(subscription, dict) \
                     else json.loads(subscription)
                 subscription.pop('event')
