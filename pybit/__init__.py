@@ -1753,8 +1753,12 @@ class HTTP:
 
             # Prepare request; use 'params' for GET and 'data' for POST.
             if method == 'GET':
+                headers = {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                }
                 r = self.client.prepare_request(
-                    requests.Request(method, path, params=req_params)
+                    requests.Request(method, path, params=req_params,
+                                     headers=headers)
                 )
             else:
                 if 'spot' in path:
