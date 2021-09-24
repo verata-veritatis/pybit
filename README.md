@@ -28,9 +28,15 @@ Python3 API connector for Bybit's HTTP and Websockets APIs.
     + [LCP Info](#lcp-info)
   * [Wallet Data Endpoints](#wallet-data-endpoints)
   * [API Data Endpoints](#api-data-endpoints)
+  * [Account Asset Endpoints](#account-asset-endpoints)
   * [WebSocket](#websocket)
-    + [Public Topics](#public-topics)
-    + [Private Topics](#private-topics)
+    * [Futures](#futures)
+      + [Public Topics](#public-topics)
+      + [Private Topics](#private-topics)
+    + [Spot](#spot)
+      + [Public Topics V1](#public-topics-v1)
+      + [Public Topics V2](#public-topics-v2)
+      + [Private Topics](#private-topics-spot)
 - [Contact](#contact)
 - [Contributors](#contributors)
 - [Donations](#donations)
@@ -89,8 +95,13 @@ ws.fetch('order')
 ws.fetch('position')
 ```
 Check out the example python files or the list of endpoints below for more information on available
-endpoints and methods. More documentation on the `HTTP` and `WebSocket` methods can
-be found at https://github.com/verata-veritatis/pybit/blob/master/docs/HTTP.md and https://github.com/verata-veritatis/pybit/blob/master/docs/WebSocket.md, respectively.
+endpoints and methods. More documentation on the `HTTP` methods can
+be found at:
+- https://github.com/verata-veritatis/pybit/blob/master/docs/HTTP.md
+- https://github.com/verata-veritatis/pybit/blob/master/examples/http.py
+
+Usage examples on the `WebSocket` methods can be found at:
+- https://github.com/verata-veritatis/pybit/blob/master/examples/websocket.py
 
 ### Market Data Endpoints
 
@@ -117,14 +128,18 @@ be found at https://github.com/verata-veritatis/pybit/blob/master/docs/HTTP.md a
 
 #### Active Orders
 
-| Endpoint                      | Method |
-| -------------                 | ------------- |
-| Place Active Order            | `place_active_order()`  |
-| Get Active Order              | `get_active_order()`  |
-| Cancel Active Order           | `cancel_active_order()`  |
-| Cancel All Active Orders      | `cancel_all_active_orders()`  |
-| Replace Active Order          | `replace_active_order()`  |
-| Query Active Order            | `query_active_order()` |
+| Endpoint                                | Method                               |
+| --------------------------------------- | ------------------------------------ |
+| Place Active Order                      | `place_active_order()`               |
+| Get Active Order                        | `get_active_order()`                 |
+| Cancel Active Order                     | `cancel_active_order()`              |
+| Cancel All Active Orders                | `cancel_all_active_orders()`         |
+| Replace Active Order                    | `replace_active_order()`             |
+| Query Active Order                      | `query_active_order()`               |
+| Fast Cancel Active Order (Spot)         | `fast_cancel_active_order()`         |
+| Batch Cancel Active Order (Spot)        | `batch_cancel_active_order()`        |
+| Batch Fast Cancel Active Order (Spot)   | `batch_fast_cancel_active_order()`   |
+| Batch Cancel Active Order By IDs (Spot) | `batch_cancel_active_order_by_ids()` |
 
 #### Conditional Orders
 
@@ -144,7 +159,7 @@ be found at https://github.com/verata-veritatis/pybit/blob/master/docs/HTTP.md a
 | My Position                                           | `my_position()`  |
 | Set Auto Add Margin (Linear)                          | `set_auto_add_margin()`  |
 | Cross/Isolated Margin Switch (Linear)                 | `cross_isolated_margin_switch()`  |
-| Full/Partial Position SL/TP Switch (not avail. yet)   | N/A |
+| Full/Partial Position SL/TP Switch                    | `full_partial_position_tp_sl_switch` |
 | Add/Reduce Margin (Linear)                            | `add_reduce_margin()` |
 | Set Trading-Stop                                      | `set_trading_stop()`  |
 | Set Leverage                                          | `set_leverage()`  |
@@ -163,7 +178,7 @@ be found at https://github.com/verata-veritatis/pybit/blob/master/docs/HTTP.md a
 
 | Endpoint                                      | Method |
 | -------------                                 | ------------- |
-| Get the Last Funding Rate (Inverse)           | `get_the_last_funding_rate()`  |
+| Get the Last Funding Rate                     | `get_the_last_funding_rate()`  |
 | My Last Funding Fee                           | `my_last_funding_fee()`  |
 | Predicted Funding Rate and My Funding Fee     | `predicted_funding_rate()` |
 
@@ -195,6 +210,16 @@ be found at https://github.com/verata-veritatis/pybit/blob/master/docs/HTTP.md a
 | Server Time        | `server_time()`  |
 | Announcement       | `announcement()`  |
 
+### Account Asset Endpoints
+
+| Endpoint                       | Method                             |
+| ------------------------------ | ---------------------------------- |
+| Create Internal Transfer       | `create_internal_transfer()`       |
+| Create Subaccount Transfer     | `create_subaccount_transfer()`     |
+| Query Transfer List            | `query_transfer_list()`            |
+| Query Subaccount Transfer List | `query_subaccount_transfer_list()` |
+| Query Subaccount List          | `query_subaccount_list()`          |
+
 ### pybit Custom Endpoints
 
 | Endpoint                          | Method |
@@ -207,7 +232,10 @@ be found at https://github.com/verata-veritatis/pybit/blob/master/docs/HTTP.md a
 
 ### WebSocket
 
-#### Public Topics
+To see comprehensive examples of how to subscribe to the futures and spot websockets, check the [examples file](https://github.com/verata-veritatis/pybit/blob/master/examples/websocket.py).
+
+#### Futures
+##### Public Topics
 
 | Topic Name            | Topic String |
 | -------------         | ------------- |
@@ -218,7 +246,7 @@ be found at https://github.com/verata-veritatis/pybit/blob/master/docs/HTTP.md a
 | instrument_info       | `'instrument_info'`  |
 | klineV2               | `'klineV2'`  |
 
-#### Private Topics
+##### Private Topics
 
 | Topic Name            | Topic String |
 | -------------         | ------------- |
@@ -227,8 +255,41 @@ be found at https://github.com/verata-veritatis/pybit/blob/master/docs/HTTP.md a
 | order                 | `'order'`  |
 | stop_order            | `'stop_order'`  |
 
+#### Spot
+Topic names for spot are listed here, but not the topic strings. This is because the spot websocket uses a JSON for topics and their filters/parameters, rather than a single string for both. As a result, a topic string cannot be used to `ws.fetch()` data. You can find a complete list of sample JSONs for subscribing to each spot topic in the [official API documentation](https://bybit-exchange.github.io/docs/spot/#t-publictopics).
+
+To see how to use these JSONs with pybit, please check the [examples file](https://github.com/verata-veritatis/pybit/blob/master/examples/websocket.py).
+
+##### Public Topics V1
+| Topic Name  |
+| ----------- |
+| trade       |
+| realtimes   |
+| kline       |
+| depth       |
+| mergedDepth |
+| diffDepth   |
+
+##### Public Topics V2
+| Topic Name |
+| ---------- |
+| depth      |
+| kline      |
+| trade      |
+| bookTicker |
+| realtimes  |
+
+##### Private Topics (Spot)
+| Topic Name          |
+| ------------------- |
+| outboundAccountInfo |
+| executionReport     |
+| ticketInfo          |
+
 ## Contact
-You can reach out to me via Telegram: @verataveritatis. I'm pretty active on the [BybitAPI Telegram](https://t.me/Bybitapi) group chat.
+You can reach out to (Verata) me via Telegram: @verataveritatis. I'm pretty active on the [BybitAPI Telegram](https://t.me/BybitAPI) group chat.
+
+In addition, maintainers Dexter and MJ are also active there.
 
 ## Contributors
 

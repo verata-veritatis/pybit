@@ -112,6 +112,24 @@ def long_short_ratio(self, **kwargs):
     :returns: Request results as dictionary.
     """
 
+def server_time(self):
+    """
+    Get Bybit server time.
+
+    :returns: Request results as dictionary.
+    """
+
+def announcement(self):
+    """
+    Get Bybit OpenAPI announcements in the last 30 days by reverse order.
+
+    :returns: Request results as dictionary.
+    """
+```
+
+## Private Endpoints
+
+```python
 def place_active_order(self, **kwargs):
     """
     Places an active order. For more information, see
@@ -120,18 +138,6 @@ def place_active_order(self, **kwargs):
     :param kwargs: See
         https://bybit-exchange.github.io/docs/inverse/#t-activeorders.
     :returns: Request results as dictionary.
-    """
-
-def place_active_order_bulk(self, orders: list, max_in_parallel=10):
-    """
-    Places multiple active orders in bulk using multithreading. For more
-    information on place_active_order, see
-    https://bybit-exchange.github.io/docs/inverse/#t-activeorders.
-
-    :param list orders: A list of orders and their parameters.
-    :param max_in_parallel: The number of requests to be sent in parallel.
-        Note that you are limited to 50 requests per second.
-    :returns: Future request result dictionaries as a list.
     """
 
 def get_active_order(self, **kwargs):
@@ -154,18 +160,6 @@ def cancel_active_order(self, **kwargs):
     :returns: Request results as dictionary.
     """
 
-def cancel_active_order_bulk(self, orders: list, max_in_parallel=10):
-    """
-    Cancels multiple active orders in bulk using multithreading. For more
-    information on cancel_active_order, see
-    https://bybit-exchange.github.io/docs/inverse/#t-activeorders.
-
-    :param list orders: A list of orders and their parameters.
-    :param max_in_parallel: The number of requests to be sent in parallel.
-        Note that you are limited to 50 requests per second.
-    :returns: Future request result dictionaries as a list.
-    """
-
 def cancel_all_active_orders(self, **kwargs):
     """
     Cancel all active orders that are unfilled or partially filled. Fully
@@ -176,6 +170,43 @@ def cancel_all_active_orders(self, **kwargs):
     :returns: Request results as dictionary.
     """
 
+def fast_cancel_active_order(self, **kwargs):
+    """
+    Fast cancels an active order.
+
+    :param kwargs: See
+        https://bybit-exchange.github.io/docs/spot/#t-fastcancelactiveorder.
+    :returns: Request results as dictionary.
+    """
+
+def batch_cancel_active_order(self, **kwargs):
+    """
+    Batch cancels active orders.
+
+    :param kwargs: See
+        https://bybit-exchange.github.io/docs/spot/#t-batchcancelactiveorder.
+    :returns: Request results as dictionary.
+    """
+
+    
+def batch_fast_cancel_active_order(self, **kwargs):
+    """
+    Batch fast cancels active orders.
+
+    :param kwargs: See
+        https://bybit-exchange.github.io/docs/spot/#t-batchfastcancelactiveorder.
+    :returns: Request results as dictionary.
+    """
+
+def batch_cancel_active_order_by_ids(self, **kwargs):
+    """
+    Batch cancels active order by ids.
+
+    :param kwargs: See
+        https://bybit-exchange.github.io/docs/spot/#t-batchcancelactiveorderbyids.
+    :returns: Request results as dictionary.
+    """
+
 def replace_active_order(self, **kwargs):
     """
     Replace order can modify/amend your active orders.
@@ -183,18 +214,6 @@ def replace_active_order(self, **kwargs):
     :param kwargs: See
         https://bybit-exchange.github.io/docs/inverse/#t-replaceactive.
     :returns: Request results as dictionary.
-    """
-
-def replace_active_order_bulk(self, orders: list, max_in_parallel=10):
-    """
-    Replaces multiple active orders in bulk using multithreading. For more
-    information on replace_active_order, see
-    https://bybit-exchange.github.io/docs/inverse/#t-replaceactive.
-
-    :param list orders: A list of orders and their parameters.
-    :param max_in_parallel: The number of requests to be sent in parallel.
-        Note that you are limited to 50 requests per second.
-    :returns: Future request result dictionaries as a list.
     """
 
 def query_active_order(self, **kwargs):
@@ -214,18 +233,6 @@ def place_conditional_order(self, **kwargs):
     :param kwargs: See
         https://bybit-exchange.github.io/docs/inverse/#t-placecond.
     :returns: Request results as dictionary.
-    """
-
-def place_conditional_order_bulk(self, orders: list, max_in_parallel=10):
-    """
-    Places multiple conditional orders in bulk using multithreading. For
-    more information on place_active_order, see
-    https://bybit-exchange.github.io/docs/inverse/#t-placecond.
-
-    :param orders: A list of orders and their parameters.
-    :param max_in_parallel: The number of requests to be sent in parallel.
-        Note that you are limited to 50 requests per second.
-    :returns: Future request result dictionaries as a list.
     """
 
 def get_conditional_order(self, **kwargs):
@@ -248,20 +255,6 @@ def cancel_conditional_order(self, **kwargs):
     :returns: Request results as dictionary.
     """
 
-def cancel_conditional_order_bulk(self, orders: list, max_in_parallel=10):
-    """
-    Cancels multiple conditional orders in bulk using multithreading. For
-    more information on cancel_active_order, see
-    https://bybit-exchange.github.io/docs/inverse/#t-cancelcond.
-
-    :param list orders: A list of orders and their parameters.
-    :param max_in_parallel: The number of requests to be sent in parallel.
-        Note that you are limited to 50 requests per second.
-    :returns: Future request result dictionaries as a list.
-    """
-
-
-
 def cancel_all_conditional_orders(self, **kwargs):
     """
     Cancel all conditional orders that are unfilled or partially filled.
@@ -279,18 +272,6 @@ def replace_conditional_order(self, **kwargs):
     :param kwargs: See
         https://bybit-exchange.github.io/docs/inverse/#t-replacecond.
     :returns: Request results as dictionary.
-    """
-
-def replace_conditional_order_bulk(self, orders: list, max_in_parallel=10):
-    """
-    Replaces multiple conditional orders in bulk using multithreading. For
-    more information on replace_active_order, see
-    https://bybit-exchange.github.io/docs/inverse/#t-replacecond.
-
-    :param list orders: A list of orders and their parameters.
-    :param max_in_parallel: The number of requests to be sent in parallel.
-        Note that you are limited to 50 requests per second.
-    :returns: Future request result dictionaries as a list.
     """
 
 def query_conditional_order(self, **kwargs):
@@ -534,20 +515,50 @@ def asset_exchange_records(self, **kwargs):
     :returns: Request results as dictionary.
     """
 
-def server_time(self):
+def create_internal_transfer(self, **kwargs):
     """
-    Get Bybit server time.
+    Create internal transfer.
 
+    :param kwargs: See
+        https://bybit-exchange.github.io/docs/account_asset/#t-createinternaltransfer.
     :returns: Request results as dictionary.
     """
 
-def announcement(self):
+def create_subaccount_transfer(self, **kwargs):
     """
-    Get Bybit OpenAPI announcements in the last 30 days by reverse order.
+    Create internal transfer.
 
+    :param kwargs: See
+        https://bybit-exchange.github.io/docs/account_asset/#t-createsubaccounttransfer.
     :returns: Request results as dictionary.
     """
 
+def query_transfer_list(self, **kwargs):
+    """
+    Create internal transfer.
+
+    :param kwargs: See
+        https://bybit-exchange.github.io/docs/account_asset/#t-querytransferlist.
+    :returns: Request results as dictionary.
+    """
+
+def query_subaccount_list(self):
+    """
+    Create internal transfer.
+
+    :param kwargs: See
+        https://bybit-exchange.github.io/docs/account_asset/#t-querysubaccountlist.
+    :returns: Request results as dictionary.
+    """
+
+def query_subaccount_transfer_list(self,**kwargs):
+    """
+    Create internal transfer.
+
+    :param kwargs: See
+        https://bybit-exchange.github.io/docs/account_asset/#t-querysubaccounttransferlist.
+    :returns: Request results as dictionary.
+    """
 ```
 
 ## Custom Methods
@@ -561,5 +572,77 @@ def close_position(self, symbol):
         e.g. 'BTCUSD'.
     :returns: Request results as dictionary.
 
+    """
+
+def place_active_order_bulk(self, orders: list, max_in_parallel=10):
+    """
+    Places multiple active orders in bulk using multithreading. For more
+    information on place_active_order, see
+    https://bybit-exchange.github.io/docs/inverse/#t-activeorders.
+
+    :param list orders: A list of orders and their parameters.
+    :param max_in_parallel: The number of requests to be sent in parallel.
+        Note that you are limited to 50 requests per second.
+    :returns: Future request result dictionaries as a list.
+    """
+
+def cancel_active_order_bulk(self, orders: list, max_in_parallel=10):
+    """
+    Cancels multiple active orders in bulk using multithreading. For more
+    information on cancel_active_order, see
+    https://bybit-exchange.github.io/docs/inverse/#t-activeorders.
+
+    :param list orders: A list of orders and their parameters.
+    :param max_in_parallel: The number of requests to be sent in parallel.
+        Note that you are limited to 50 requests per second.
+    :returns: Future request result dictionaries as a list.
+    """
+
+def replace_active_order_bulk(self, orders: list, max_in_parallel=10):
+    """
+    Replaces multiple active orders in bulk using multithreading. For more
+    information on replace_active_order, see
+    https://bybit-exchange.github.io/docs/inverse/#t-replaceactive.
+
+    :param list orders: A list of orders and their parameters.
+    :param max_in_parallel: The number of requests to be sent in parallel.
+        Note that you are limited to 50 requests per second.
+    :returns: Future request result dictionaries as a list.
+    """
+
+def place_conditional_order_bulk(self, orders: list, max_in_parallel=10):
+    """
+    Places multiple conditional orders in bulk using multithreading. For
+    more information on place_active_order, see
+    https://bybit-exchange.github.io/docs/inverse/#t-placecond.
+
+    :param orders: A list of orders and their parameters.
+    :param max_in_parallel: The number of requests to be sent in parallel.
+        Note that you are limited to 50 requests per second.
+    :returns: Future request result dictionaries as a list.
+    """
+
+def cancel_conditional_order_bulk(self, orders: list, max_in_parallel=10):
+    """
+    Cancels multiple conditional orders in bulk using multithreading. For
+    more information on cancel_active_order, see
+    https://bybit-exchange.github.io/docs/inverse/#t-cancelcond.
+
+    :param list orders: A list of orders and their parameters.
+    :param max_in_parallel: The number of requests to be sent in parallel.
+        Note that you are limited to 50 requests per second.
+    :returns: Future request result dictionaries as a list.
+    """
+
+def replace_conditional_order_bulk(self, orders: list, max_in_parallel=10):
+    """
+    Replaces multiple conditional orders in bulk using multithreading. For
+    more information on replace_active_order, see
+    https://bybit-exchange.github.io/docs/inverse/#t-replacecond.
+
+    :param list orders: A list of orders and their parameters.
+    :param max_in_parallel: The number of requests to be sent in parallel.
+        Note that you are limited to 50 requests per second.
+    :returns: Future request result dictionaries as a list.
     """
 ```
