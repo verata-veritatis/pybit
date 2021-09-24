@@ -287,9 +287,9 @@ To see how to use these JSONs with pybit, please check the [examples file](https
 | ticketInfo          |
 
 ## Contact
-You can reach out to (Verata) me via Telegram: @verataveritatis. I'm pretty active on the [BybitAPI Telegram](https://t.me/BybitAPI) group chat.
+You can reach out to me (Verata) via Telegram: @verataveritatis. I'm pretty active on the [BybitAPI Telegram](https://t.me/BybitAPI) group chat.
 
-In addition, maintainers Dexter and MJ are also active there.
+In addition, maintainers Dexter and MJ are also active there as Bybit employees.
 
 ## Contributors
 
