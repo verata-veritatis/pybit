@@ -69,9 +69,29 @@ user_trade_records()
 server_time()
 announcement()
 
+Spot Methods:
+(many of the above methods can also be used with the spot market, provided the argument spot=True is passed)
+------------------------
+fast_cancel_active_order()
+batch_cancel_active_order()
+batch_fast_cancel_active_order()
+batch_cancel_active_order_by_ids()
+
+Asset Transfer Methods:
+------------------------
+create_internal_transfer()
+create_subaccount_transfer()
+query_transfer_list()
+query_subaccount_transfer_list()
+query_subaccount_list()
+
 Custom Methods:
 (requires authentication)
 ------------------------
+place_active_order_bulk()
+cancel_active_order_bulk()
+place_conditional_order_bulk()
+cancel_conditional_order_bulk()
 close_position()
 
 """
@@ -101,3 +121,13 @@ session_unauth.latest_information_for_symbol(symbol='EOSUSD')
 
 # We can fetch our wallet balance using an auth'd session.
 session_auth.get_wallet_balance(coin='BTC')
+
+"""
+Spot API.
+"""
+
+# Unauthenticated, prefer spot endpoint
+session_spot_unauth = HTTP(endpoint='https://api.bybit.com', spot=True)
+
+# Prefer spot endpoint for this request, without specifying at obj creation
+session_auth.get_wallet_balance(coin='BTC', spot=True)
