@@ -578,7 +578,8 @@ class HTTP:
         return self._submit_request(
             method='DELETE',
             path=self.endpoint + '/spot/v1/order/fast',
-            query=kwargs
+            query=kwargs,
+            auth=True
         )
 
     def cancel_active_order_bulk(self, orders: list, max_in_parallel=10):
