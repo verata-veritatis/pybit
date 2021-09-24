@@ -189,6 +189,14 @@ class HTTP:
         )
 
     def merged_orderbook(self, **kwargs):
+        """
+        Get the merged orderbook.
+
+        :param kwargs: See
+            https://bybit-exchange.github.io/docs/spot/#t-mergedorderbook.
+        :returns: Request results as dictionary.
+        """
+
         return self._submit_request(
             method='GET',
             path=self.endpoint + '/spot/quote/v1/depth/merged',
@@ -242,6 +250,14 @@ class HTTP:
         )
 
     def last_traded_price(self, **kwargs):
+        """
+        Get the last traded price.
+
+        :param kwargs: See
+            https://bybit-exchange.github.io/docs/spot/#t-lasttradedprice.
+        :returns: Request results as dictionary.
+        """
+
         return self._submit_request(
             method='GET',
             path=self.endpoint + '/spot/quote/v1/ticker/price',
@@ -249,6 +265,14 @@ class HTTP:
         )
 
     def best_bid_ask_price(self, **kwargs):
+        """
+        Get the best bid/ask price.
+
+        :param kwargs: See
+            https://bybit-exchange.github.io/docs/spot/#t-bestbidask.
+        :returns: Request results as dictionary.
+        """
+
         return self._submit_request(
             method='GET',
             path=self.endpoint + '/spot/quote/v1/ticker/book_ticker',
@@ -543,6 +567,14 @@ class HTTP:
         )
 
     def fast_cancel_active_order(self, **kwargs):
+        """
+        Fast cancels an active order.
+
+        :param kwargs: See
+            https://bybit-exchange.github.io/docs/spot/#t-fastcancelactiveorder.
+        :returns: Request results as dictionary.
+        """
+
         return self._submit_request(
             method='DELETE',
             path=self.endpoint + '/spot/v1/order/fast',
@@ -596,6 +628,14 @@ class HTTP:
         )
 
     def batch_cancel_active_order(self, **kwargs):
+        """
+        Batch cancels active orders.
+
+        :param kwargs: See
+            https://bybit-exchange.github.io/docs/spot/#t-batchcancelactiveorder.
+        :returns: Request results as dictionary.
+        """
+
         return self._submit_request(
             method='DELETE',
             path=self.endpoint + '/spot/order/batch-cancel',
@@ -604,6 +644,14 @@ class HTTP:
         )
 
     def batch_fast_cancel_active_order(self, **kwargs):
+        """
+        Batch fast cancels active orders.
+
+        :param kwargs: See
+            https://bybit-exchange.github.io/docs/spot/#t-batchfastcancelactiveorder.
+        :returns: Request results as dictionary.
+        """
+
         return self._submit_request(
             method='DELETE',
             path=self.endpoint + '/spot/order/batch-fast-cancel',
@@ -612,6 +660,14 @@ class HTTP:
         )
 
     def batch_cancel_active_order_by_ids(self, **kwargs):
+        """
+        Batch cancels active order by ids.
+
+        :param kwargs: See
+            https://bybit-exchange.github.io/docs/spot/#t-batchcancelactiveorderbyids.
+        :returns: Request results as dictionary.
+        """
+
         return self._submit_request(
             method='DELETE',
             path=self.endpoint + '/spot/order/batch-cancel-by-ids',
@@ -997,7 +1053,7 @@ class HTTP:
         simultaneously.
 
         :param kwargs: See
-            https://bybit-exchange.github.io/docs/inverse/#t-switchpositionmode.
+            https://bybit-exchange.github.io/docs/inverse_futures/#t-switchpositionmode.
         :returns: Request results as dictionary.
         """
 
@@ -1481,8 +1537,11 @@ class HTTP:
     '''
     def create_internal_transfer(self, **kwargs):
         """
-        Create internal transfer. For more information, see
-        https://bybit-exchange.github.io/docs/account_asset/#t-transfer
+        Create internal transfer.
+
+        :param kwargs: See
+            https://bybit-exchange.github.io/docs/account_asset/#t-createinternaltransfer.
+        :returns: Request results as dictionary.
         """
 
         suffix="/asset/v1/private/transfer"
@@ -1498,8 +1557,11 @@ class HTTP:
 
     def create_subaccount_transfer(self, **kwargs):
         """
-        Create internal transfer. For more information, see
-        https://bybit-exchange.github.io/docs/account_asset/#t-transfer
+        Create internal transfer.
+
+        :param kwargs: See
+            https://bybit-exchange.github.io/docs/account_asset/#t-createsubaccounttransfer.
+        :returns: Request results as dictionary.
         """
 
         suffix="/asset/v1/private/sub-member/transfer"
@@ -1516,8 +1578,11 @@ class HTTP:
 
     def query_transfer_list(self, **kwargs):
         """
-        Create internal transfer. For more information, see
-        https://bybit-exchange.github.io/docs/account_asset/#t-transfer
+        Create internal transfer.
+
+        :param kwargs: See
+            https://bybit-exchange.github.io/docs/account_asset/#t-querytransferlist.
+        :returns: Request results as dictionary.
         """
 
         suffix="/asset/v1/private/transfer/list"
@@ -1531,8 +1596,11 @@ class HTTP:
 
     def query_subaccount_list(self):
         """
-        Create internal transfer. For more information, see
-        https://bybit-exchange.github.io/docs/account_asset/#t-transfer
+        Create internal transfer.
+
+        :param kwargs: See
+            https://bybit-exchange.github.io/docs/account_asset/#t-querysubaccountlist.
+        :returns: Request results as dictionary.
         """
 
         suffix="/asset/v1/private/sub-member/member-ids"
@@ -1546,8 +1614,11 @@ class HTTP:
 
     def query_subaccount_transfer_list(self,**kwargs):
         """
-        Create internal transfer. For more information, see
-        https://bybit-exchange.github.io/docs/account_asset/#t-transfer
+        Create internal transfer.
+
+        :param kwargs: See
+            https://bybit-exchange.github.io/docs/account_asset/#t-querysubaccounttransferlist.
+        :returns: Request results as dictionary.
         """
 
         suffix="/asset/v1/private/sub-member/transfer/list"
