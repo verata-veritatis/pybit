@@ -1695,11 +1695,14 @@ class HTTP:
 
         """
 
-        # Store original recv_window.
-        recv_window = self.recv_window
+        if query is None:
+            query = {}
 
         # Remove internal spot arg
         query.pop('spot', '')
+
+        # Store original recv_window.
+        recv_window = self.recv_window
 
         # Bug fix: change floating whole numbers to integers to prevent
         # auth signature errors.
