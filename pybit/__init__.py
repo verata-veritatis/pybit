@@ -35,7 +35,7 @@ except ImportError:
     from json.decoder import JSONDecodeError
 
 # Versioning.
-VERSION = '1.3.1'
+VERSION = '1.3.2'
 
 
 class HTTP:
@@ -2367,23 +2367,13 @@ class WebSocket:
 
             # If incoming 'position' data.
             elif 'position' in topic:
+                    if p['symbol'] not in self.data[topic]:
+                        self.data[topic][p['symbol']]={}
+                    self.data[topic][p['symbol']][p['side']] = p
 
                 # Record incoming position data.
                 for p in msg_json['data']:
 
-                    # linear (USDT) positions have Buy|Sell side and
-                    # updates contain all USDT positions.
-                    # For linear tickers...
-                    if p['symbol'].endswith('USDT'):
-                        try:
-                            self.data[topic][p['symbol']][p['side']] = p
-                        # if side key hasn't been created yet...
-                        except KeyError:
-                            self.data[topic][p['symbol']] = {p['side']: p}
-
-                    # For non-linear tickers...
-                    else:
-                        self.data[topic][p['symbol']] = p
 
         elif isinstance(msg_json, list):
             for item in msg_json:
