@@ -2367,12 +2367,12 @@ class WebSocket:
 
             # If incoming 'position' data.
             elif 'position' in topic:
-                    if p['symbol'] not in self.data[topic]:
-                        self.data[topic][p['symbol']]={}
-                    self.data[topic][p['symbol']][p['side']] = p
 
                 # Record incoming position data.
                 for p in msg_json['data']:
+                    if p['symbol'] not in self.data[topic]:
+                        self.data[topic][p['symbol']]={}
+                    self.data[topic][p['symbol']][p['side']] = p
 
 
         elif isinstance(msg_json, list):
