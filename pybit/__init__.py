@@ -35,7 +35,7 @@ except ImportError:
     from json.decoder import JSONDecodeError
 
 # Versioning.
-VERSION = '1.3.1'
+VERSION = '1.3.2rc0'
 
 
 class HTTP:
@@ -1957,11 +1957,11 @@ class WebSocket:
                 if not isinstance(subscription, str):
                     raise Exception('Futures subscriptions should be strings.')
 
-        for subscription in subscriptions:
-            if ('v2' in endpoint and 'symbol' in subscription) or \
-               ('v1' in endpoint and 'symbol' in subscription['params']):
-                raise Exception('Cannot subscribe to v1 topics with v2 '
-                                'endpoint, or vice versa.')
+            for subscription in subscriptions:
+                if ('v2' in endpoint and 'symbol' in subscription) or \
+                   ('v1' in endpoint and 'symbol' in subscription['params']):
+                    raise Exception('Cannot subscribe to v1 topics with v2 '
+                                    'endpoint, or vice versa.')
 
         # set websocket name for logging purposes
         self.wsName = 'Authenticated' if api_key else 'Non-Authenticated'
