@@ -1944,7 +1944,7 @@ class WebSocket:
 
         # Check if subscriptions are in the correct format
         if self.spot and not self.spot_auth:
-            for subscription in subscriptions:
+            for subscription in subscriptions.copy():
                 if isinstance(subscription, str):
                     try:
                         subscriptions.pop(subscriptions.index(subscription))
