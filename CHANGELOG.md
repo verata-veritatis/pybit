@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.3.2rc0] - 2021-10-19
 ### Modified
+- Fixed failure to load subscriptions when provided in as JSON strings
+
+## [1.3.2rc0] - 2021-10-19
+### Modified
 - Fixed the spot auth websocket to ensure subscriptions are not required
 
 ## [1.3.1] - 2021-10-07

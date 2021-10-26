@@ -35,7 +35,7 @@ except ImportError:
     from json.decoder import JSONDecodeError
 
 # Versioning.
-VERSION = '1.3.2rc0'
+VERSION = '1.3.2rc1'
 
 
 class HTTP:
