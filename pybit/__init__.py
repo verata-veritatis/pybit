@@ -524,7 +524,9 @@ class HTTP:
         :returns: Request results as dictionary.
         """
 
-        if kwargs.get('symbol', '').endswith('USDT'):
+        if self.spot is True or kwargs.get('spot', '') is True:
+            suffix = '/spot/v1/history-orders'
+        elif kwargs.get('symbol', '').endswith('USDT'):
             suffix = '/private/linear/order/list'
         elif kwargs.get('symbol', '')[-2:].isdigit():
             suffix = '/futures/private/order/list'
@@ -731,10 +733,7 @@ class HTTP:
         """
 
         if self.spot is True or kwargs.get('spot', '') is True:
-            if kwargs.get('orderId', '') or kwargs.get('orderLinkId', ''):
-                suffix = '/spot/v1/order'
-            else:
-                suffix = '/spot/v1/open-orders'
+            suffix = '/spot/v1/open-orders'
         elif kwargs.get('symbol', '').endswith('USDT'):
             suffix = '/private/linear/order/search'
         elif kwargs.get('symbol', '')[-2:].isdigit():
@@ -1944,7 +1943,7 @@ class WebSocket:
 
         # Check if subscriptions are in the correct format
         if self.spot and not self.spot_auth:
-            for subscription in subscriptions:
+            for subscription in subscriptions.copy():
                 if isinstance(subscription, str):
                     try:
                         subscriptions.pop(subscriptions.index(subscription))
@@ -1957,11 +1956,11 @@ class WebSocket:
                 if not isinstance(subscription, str):
                     raise Exception('Futures subscriptions should be strings.')
 
-        for subscription in subscriptions:
-            if ('v2' in endpoint and 'symbol' in subscription) or \
-               ('v1' in endpoint and 'symbol' in subscription['params']):
-                raise Exception('Cannot subscribe to v1 topics with v2 '
-                                'endpoint, or vice versa.')
+            for subscription in subscriptions:
+                if ('v2' in endpoint and 'symbol' in subscription) or \
+                   ('v1' in endpoint and 'symbol' in subscription['params']):
+                    raise Exception('Cannot subscribe to v1 topics with v2 '
+                                    'endpoint, or vice versa.')
 
         # set websocket name for logging purposes
         self.wsName = 'Authenticated' if api_key else 'Non-Authenticated'
@@ -2370,10 +2369,20 @@ class WebSocket:
 
                 # Record incoming position data.
                 for p in msg_json['data']:
-                    if p['symbol'] not in self.data[topic]:
-                        self.data[topic][p['symbol']]={}
-                    self.data[topic][p['symbol']][p['side']] = p
 
+                    # linear (USDT) positions have Buy|Sell side and
+                    # updates contain all USDT positions.
+                    # For linear tickers...
+                    if p['symbol'].endswith('USDT'):
+                        try:
+                            self.data[topic][p['symbol']][p['side']] = p
+                        # if side key hasn't been created yet...
+                        except KeyError:
+                            self.data[topic][p['symbol']] = {p['side']: p}
+
+                    # For non-linear tickers...
+                    else:
+                        self.data[topic][p['symbol']] = p
 
         elif isinstance(msg_json, list):
             for item in msg_json:
