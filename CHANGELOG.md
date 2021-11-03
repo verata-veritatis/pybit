@@ -5,7 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.3.2rc0] - 2021-10-19
+## [1.3.2rc2] - 2021-11-03
+### Modified
+- Alter the spot endpoint paths used for `get_active_order()` and `query_active_order()`
+
+
+## [1.3.2rc1] - 2021-10-25
 ### Modified
 - Fixed failure to load subscriptions when provided in as JSON strings
 
@@ -15,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.3.1] - 2021-10-07
 ### Modified
-- Fixed methods like `query_symbol()` (which have no API parameters) not working following the spot update
+- Fixed method/spot/v1/accounts like `query_symbol()` (which have no API parameters) not working following the spot update
 
 ## [1.3.0] - 2021-09-24
 ### Added

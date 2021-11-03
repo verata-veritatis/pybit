@@ -35,7 +35,7 @@ except ImportError:
     from json.decoder import JSONDecodeError
 
 # Versioning.
-VERSION = '1.3.2rc1'
+VERSION = '1.3.2rc2'
 
 
 class HTTP:
@@ -524,7 +524,9 @@ class HTTP:
         :returns: Request results as dictionary.
         """
 
-        if kwargs.get('symbol', '').endswith('USDT'):
+        if self.spot is True or kwargs.get('spot', '') is True:
+            suffix = '/spot/v1/history-orders'
+        elif kwargs.get('symbol', '').endswith('USDT'):
             suffix = '/private/linear/order/list'
         elif kwargs.get('symbol', '')[-2:].isdigit():
             suffix = '/futures/private/order/list'
@@ -731,10 +733,7 @@ class HTTP:
         """
 
         if self.spot is True or kwargs.get('spot', '') is True:
-            if kwargs.get('orderId', '') or kwargs.get('orderLinkId', ''):
-                suffix = '/spot/v1/order'
-            else:
-                suffix = '/spot/v1/open-orders'
+            suffix = '/spot/v1/open-orders'
         elif kwargs.get('symbol', '').endswith('USDT'):
             suffix = '/private/linear/order/search'
         elif kwargs.get('symbol', '')[-2:].isdigit():
