@@ -956,21 +956,28 @@ class HTTP:
             auth=True
         )
 
-    def my_position(self, **kwargs):
+    def my_position(self, endpoint="", **kwargs):
         """
         Get my position list.
 
         :param kwargs: See
             https://bybit-exchange.github.io/docs/inverse/#t-myposition.
+        :param endpoint: The endpoint path, such as "/v2/private/position/list".
+            This allows the user to bypass the "symbol" arg, and instead specify
+            the desired market contract type (inverse perp, linear perp, etc)
+            and receive multiple symbols in the response.
         :returns: Request results as dictionary.
         """
 
-        if kwargs.get('symbol', '').endswith('USDT'):
-            suffix = '/private/linear/position/list'
-        elif kwargs.get('symbol', '')[-2:].isdigit():
-            suffix = '/futures/private/position/list'
+        if endpoint:
+            suffix = endpoint
         else:
-            suffix = '/v2/private/position/list'
+            if kwargs.get('symbol', '').endswith('USDT'):
+                suffix = '/private/linear/position/list'
+            elif kwargs.get('symbol', '')[-2:].isdigit():
+                suffix = '/futures/private/position/list'
+            else:
+                suffix = '/v2/private/position/list'
 
         return self._submit_request(
             method='GET',
