@@ -2387,9 +2387,15 @@ class WebSocket:
         elif isinstance(msg_json, list):
             for item in msg_json:
                 topic = item.get('e')
-                if any(i in topic for i in ['outboundAccountInfo',
-                                            'executionReport', 'ticketInfo']):
-                    self.data[topic].append(item)
+                if topic == "outboundAccountInfo":
+                    self.data[topic] = item
+                elif any(i in topic for i in ['executionReport', 'ticketInfo']):
+                    # Keep appending or create new list if not already created.
+                    try:
+                        self.data[topic].append(item)
+                    except AttributeError:
+                        self.data[topic] = item
+                    self.data[topic] = item
 
     def _on_error(self, error):
         """
