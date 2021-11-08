@@ -35,7 +35,7 @@ except ImportError:
     from json.decoder import JSONDecodeError
 
 # Versioning.
-VERSION = '1.3.1'
+VERSION = '1.3.2'
 
 
 class HTTP:
@@ -524,7 +524,9 @@ class HTTP:
         :returns: Request results as dictionary.
         """
 
-        if kwargs.get('symbol', '').endswith('USDT'):
+        if self.spot is True or kwargs.get('spot', '') is True:
+            suffix = '/spot/v1/history-orders'
+        elif kwargs.get('symbol', '').endswith('USDT'):
             suffix = '/private/linear/order/list'
         elif kwargs.get('symbol', '')[-2:].isdigit():
             suffix = '/futures/private/order/list'
@@ -731,10 +733,7 @@ class HTTP:
         """
 
         if self.spot is True or kwargs.get('spot', '') is True:
-            if kwargs.get('orderId', '') or kwargs.get('orderLinkId', ''):
-                suffix = '/spot/v1/order'
-            else:
-                suffix = '/spot/v1/open-orders'
+            suffix = '/spot/v1/open-orders'
         elif kwargs.get('symbol', '').endswith('USDT'):
             suffix = '/private/linear/order/search'
         elif kwargs.get('symbol', '')[-2:].isdigit():
@@ -957,21 +956,28 @@ class HTTP:
             auth=True
         )
 
-    def my_position(self, **kwargs):
+    def my_position(self, endpoint="", **kwargs):
         """
         Get my position list.
 
         :param kwargs: See
             https://bybit-exchange.github.io/docs/inverse/#t-myposition.
+        :param endpoint: The endpoint path, such as "/v2/private/position/list".
+            This allows the user to bypass the "symbol" arg, and instead specify
+            the desired market contract type (inverse perp, linear perp, etc)
+            and receive multiple symbols in the response.
         :returns: Request results as dictionary.
         """
 
-        if kwargs.get('symbol', '').endswith('USDT'):
-            suffix = '/private/linear/position/list'
-        elif kwargs.get('symbol', '')[-2:].isdigit():
-            suffix = '/futures/private/position/list'
+        if endpoint:
+            suffix = endpoint
         else:
-            suffix = '/v2/private/position/list'
+            if kwargs.get('symbol', '').endswith('USDT'):
+                suffix = '/private/linear/position/list'
+            elif kwargs.get('symbol', '')[-2:].isdigit():
+                suffix = '/futures/private/position/list'
+            else:
+                suffix = '/v2/private/position/list'
 
         return self._submit_request(
             method='GET',
@@ -1944,7 +1950,7 @@ class WebSocket:
 
         # Check if subscriptions are in the correct format
         if self.spot and not self.spot_auth:
-            for subscription in subscriptions:
+            for subscription in subscriptions.copy():
                 if isinstance(subscription, str):
                     try:
                         subscriptions.pop(subscriptions.index(subscription))
@@ -1957,11 +1963,11 @@ class WebSocket:
                 if not isinstance(subscription, str):
                     raise Exception('Futures subscriptions should be strings.')
 
-        for subscription in subscriptions:
-            if ('v2' in endpoint and 'symbol' in subscription) or \
-               ('v1' in endpoint and 'symbol' in subscription['params']):
-                raise Exception('Cannot subscribe to v1 topics with v2 '
-                                'endpoint, or vice versa.')
+            for subscription in subscriptions:
+                if ('v2' in endpoint and 'symbol' in subscription) or \
+                   ('v1' in endpoint and 'symbol' in subscription['params']):
+                    raise Exception('Cannot subscribe to v1 topics with v2 '
+                                    'endpoint, or vice versa.')
 
         # set websocket name for logging purposes
         self.wsName = 'Authenticated' if api_key else 'Non-Authenticated'
@@ -2388,9 +2394,15 @@ class WebSocket:
         elif isinstance(msg_json, list):
             for item in msg_json:
                 topic = item.get('e')
-                if any(i in topic for i in ['outboundAccountInfo',
-                                            'executionReport', 'ticketInfo']):
-                    self.data[topic].append(item)
+                if topic == "outboundAccountInfo":
+                    self.data[topic] = item
+                elif any(i in topic for i in ['executionReport', 'ticketInfo']):
+                    # Keep appending or create new list if not already created.
+                    try:
+                        self.data[topic].append(item)
+                    except AttributeError:
+                        self.data[topic] = item
+                    self.data[topic] = item
 
     def _on_error(self, error):
         """

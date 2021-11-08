@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.2] - 2021-11-05
+- Enable websocket `fetch()` to handle multiple position sides from linear perp symbols
+- Fix `fetch()` for private spot websocket
+- Support `endpoint` argument for `my_position()`, allowing the user to call this method without supplying a symbol
+  - `symbol` is not a required parameter for these endpoints, but pybit typically relies on it for deciding which endpoint to call
+- See below release candidates for details.
+
+## [1.3.2rc2] - 2021-11-03
+### Modified
+- Alter the spot endpoint paths used for `get_active_order()` and `query_active_order()`
+
+## [1.3.2rc1] - 2021-10-25
+### Modified
+- Fixed failure to load subscriptions when provided in as JSON strings
+
+## [1.3.2rc0] - 2021-10-19
+### Modified
+- Fixed the spot auth websocket to ensure subscriptions are not required
+
 ## [1.3.1] - 2021-10-07
 ### Modified
 - Fixed methods like `query_symbol()` (which have no API parameters) not working following the spot update
