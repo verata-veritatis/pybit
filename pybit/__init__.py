@@ -1891,7 +1891,7 @@ class WebSocket:
                  subscriptions=None, logging_level=logging.INFO,
                  max_data_length=200, ping_interval=30, ping_timeout=10,
                  restart_on_error=True, purge_on_fetch=True,
-                 trim_data=True):
+                 trim_data=True, signature_window=1000):
         """
         Initializes the websocket session.
 
@@ -1920,6 +1920,8 @@ class WebSocket:
             length or only get the data since the last fetch?
         :param trim_data: Decide whether the returning data should be
             trimmed to only provide the data value.
+        :param signature_window: Timestamp window used for authentication
+            signature generation. Set in ms.
 
         :returns: WebSocket session.
         """
@@ -2005,6 +2007,9 @@ class WebSocket:
         self.api_key = api_key
         self.api_secret = api_secret
 
+        # Set signature window
+        self.signature_window = signature_window
+
         # Set topic subscriptions for WebSocket.
         self.subscriptions = subscriptions
         # Checking if using auth spot connection.
@@ -2080,7 +2085,7 @@ class WebSocket:
         """
 
         # Generate expires.
-        expires = int((time.time() + 1) * 1000)
+        expires = int((time.time() + 1) * int(self.signature_window))
 
         # Generate signature.
         _val = f'GET/realtime{expires}'
