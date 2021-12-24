@@ -1245,22 +1245,30 @@ class HTTP:
             auth=True
         )
 
-    def get_risk_limit(self, **kwargs):
+    def get_risk_limit(self, endpoint="", **kwargs):
         """
         Get risk limit.
 
         :param kwargs: See
             https://bybit-exchange.github.io/docs/inverse/#t-getrisklimit.
+        :param endpoint: The endpoint path, such as "/v2/public/risk-limit/list".
+            This allows the user to bypass the "symbol" arg, and instead specify
+            the desired market contract type (inverse perp, linear perp, etc)
+            and receive multiple symbols in the response.
+
         :returns: Request results as dictionary.
         """
 
         if kwargs.get('is_linear') in (False, True):
             self.logger.warning("The is_linear argument is obsolete.")
 
-        if kwargs.get('symbol', '').endswith('USDT'):
-            suffix = '/public/linear/risk-limit'
+        if endpoint:
+            suffix = endpoint
         else:
-            suffix = '/v2/public/risk-limit/list'
+            if kwargs.get('symbol', '').endswith('USDT'):
+                suffix = '/public/linear/risk-limit'
+            else:
+                suffix = '/v2/public/risk-limit/list'
 
         return self._submit_request(
             method='GET',
