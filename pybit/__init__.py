@@ -1265,8 +1265,7 @@ class HTTP:
         return self._submit_request(
             method='GET',
             path=self.endpoint + suffix,
-            query=kwargs,
-            auth=True
+            query=kwargs
         )
 
     def set_risk_limit(self, **kwargs):
