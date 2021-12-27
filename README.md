@@ -101,7 +101,7 @@ be found at:
 - https://github.com/verata-veritatis/pybit/blob/master/examples/http.py
 
 Usage examples on the `WebSocket` methods can be found at:
-- https://github.com/verata-veritatis/pybit/blob/master/examples/websocket.py
+- https://github.com/verata-veritatis/pybit/blob/master/examples/websocket_example.py
 
 ### Market Data Endpoints
 
@@ -232,7 +232,7 @@ Usage examples on the `WebSocket` methods can be found at:
 
 ### WebSocket
 
-To see comprehensive examples of how to subscribe to the futures and spot websockets, check the [examples file](https://github.com/verata-veritatis/pybit/blob/master/examples/websocket.py).
+To see comprehensive examples of how to subscribe to the futures and spot websockets, check the [examples file](https://github.com/verata-veritatis/pybit/blob/master/examples/websocket_example.py).
 
 #### Futures
 ##### Public Topics
@@ -258,7 +258,7 @@ To see comprehensive examples of how to subscribe to the futures and spot websoc
 #### Spot
 Topic names for spot are listed here, but not the topic strings. This is because the spot websocket uses a JSON for topics and their filters/parameters, rather than a single string for both. As a result, a topic string cannot be used to `ws.fetch()` data. You can find a complete list of sample JSONs for subscribing to each spot topic in the [official API documentation](https://bybit-exchange.github.io/docs/spot/#t-publictopics).
 
-To see how to use these JSONs with pybit, please check the [examples file](https://github.com/verata-veritatis/pybit/blob/master/examples/websocket.py).
+To see how to use these JSONs with pybit, please check the [examples file](https://github.com/verata-veritatis/pybit/blob/master/examples/websocket_example.py).
 
 ##### Public Topics V1
 | Topic Name  |
