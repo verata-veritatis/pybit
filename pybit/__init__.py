@@ -1573,7 +1573,7 @@ class HTTP:
                 auth=True
             )
         else:
-            self.logger.error('amount must be in string format')
+            raise Exception(f"amount must be in string format, got: '{kwargs.get('amount', None)}'")
 
     def create_subaccount_transfer(self, **kwargs):
         """
@@ -1594,7 +1594,7 @@ class HTTP:
                 auth=True
             )
         else:
-            self.logger.error('amount must be in string format')
+            raise Exception(f"amount must be in string format, got: '{kwargs.get('amount', None)}'")
 
     def query_transfer_list(self, **kwargs):
         """
