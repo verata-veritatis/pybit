@@ -2045,8 +2045,7 @@ class WebSocket:
             topic = self.conform_topic(topic)
         # If the topic given isn't in the initial subscribed list.
         if topic not in self.subscriptions:
-            self.logger.error(f'You aren\'t subscribed to the {topic} topic.')
-            return
+            raise Exception(f"You aren\'t subscribed to the {topic} topic.")
 
         # Pop all trade or execution data on each poll.
         # don't pop order or stop_order data as we will lose valuable state
