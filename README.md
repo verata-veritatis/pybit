@@ -283,7 +283,7 @@ To see how to use these JSONs with pybit, please check the [examples file](https
 | ticketInfo          |
 
 ## Contact
-I've been very busy with life and other projects (DAA, ChimpFight, PHASE) and haven't updated this repo in a while, but I try to stick around. 
+I've been very busy with life and other projects, and haven't updated this repo in a while. 
 
 99.9% of the maintanance and upkeep is done by fellow Bybit employees and developers, Dexter (@dextertd) and MJ (@blacksabbather). They're the real heroes. If you need a response ASAP, you'll be better off reaching out to them.
 
