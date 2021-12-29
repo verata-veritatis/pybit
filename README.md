@@ -1,7 +1,4 @@
 # pybit
-<!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-3-orange.svg?style=flat-square)](#contributors-)
-<!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 [![Build Status](https://img.shields.io/pypi/pyversions/pybit)](https://www.python.org/downloads/)
 [![Build Status](https://img.shields.io/pypi/v/pybit)](https://pypi.org/project/pybit/)
@@ -287,9 +284,13 @@ To see how to use these JSONs with pybit, please check the [examples file](https
 | ticketInfo          |
 
 ## Contact
-You can reach out to me (Verata) via Telegram: @verataveritatis. I'm pretty active on the [BybitAPI Telegram](https://t.me/BybitAPI) group chat.
+I've been very busy with life and other projects (DAA, ChimpFight, PHASE) and haven't updated this repo in a while, but I try to stick around. 
 
-In addition, maintainers Dexter and MJ are also active there as Bybit employees.
+99.9% of the maintanance and upkeep is done by fellow Bybit employees and developers, Dexter (@dextertd) and MJ (@blacksabbather). They're the real heroes. If you need a response ASAP, you'll be better off reaching out to them.
+
+[BybitAPI Telegram](https://t.me/BybitAPI) group chat is a good spot to ask.
+
+If you really need to reach out to me, you can hit me (Verata) up via Telegram: @verataveritatis.
 
 ## Contributors
 
@@ -300,7 +301,9 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
 <!-- markdownlint-disable -->
 <table>
   <tr>
-    <td align="center"><a href="https://github.com/verata-veritatis"><img src="https://avatars0.githubusercontent.com/u/9677388?v=4" width="100px;" alt=""/><br /><sub><b>verata-veritatis</b></sub></a><br /><a href="https://github.com/verata-veritatis/pybit/commits?author=verata-veritatis" title="Code">💻</a> <a href="https://github.com/verata-veritatis/pybit/commits?author=verata-veritatis" title="Documentation">📖</a></td>
+    <td align="center"><a href="https://github.com/dextertd"><img src="https://avatars.githubusercontent.com/u/54495183?v=4" width="100px;" alt=""/><br /><sub><b>dextertd</b></sub></a><br /><a href="https://github.com/verata-veritatis/pybit/commits?author=dextertd" title="Code">💻</a> <a href="https://github.com/verata-veritatis/pybit/commits?author=dextertd" title="Documentation">📖</a></td>
+    <td align="center"><a href="https://github.com/blacksabbather"><img src="https://avatars.githubusercontent.com/u/33573782?v=4" width="100px;" alt=""/><br /><sub><b>blacksabbather</b></sub></a><br /><a href="https://github.com/verata-veritatis/pybit/commits?author=blacksabbather" title="Code">💻</a> <a href="https://github.com/verata-veritatis/pybit/commits?author=blacksabbather" title="Documentation">📖</a></td>
+       <td align="center"><a href="https://github.com/verata-veritatis"><img src="https://avatars0.githubusercontent.com/u/9677388?v=4" width="100px;" alt=""/><br /><sub><b>verata-veritatis</b></sub></a><br /><a href="https://github.com/verata-veritatis/pybit/commits?author=verata-veritatis" title="Code">💻</a> <a href="https://github.com/verata-veritatis/pybit/commits?author=verata-veritatis" title="Documentation">📖</a></td>
      <td align="center"><a href="https://github.com/APF20"><img src="https://avatars0.githubusercontent.com/u/74583612?v=4" width="100px;" alt=""/><br /><sub><b>APF20</b></sub></a><br /><a href="https://github.com/verata-veritatis/pybit/commits?author=APF20" title="Code">💻</a></td>
      <td align="center"><a href="https://github.com/cameronhh"><img src="https://avatars0.githubusercontent.com/u/30434979?v=4" width="100px;" alt=""/><br /><sub><b>Cameron Harder-Hutton</b></sub></a><br /><a href="https://github.com/verata-veritatis/pybit/commits?author=cameronhh" title="Code">💻</a></td>
      <td align="center"><a href="https://github.com/tomcru"><img src="https://avatars0.githubusercontent.com/u/35841182?v=4" width="100px;" alt=""/><br /><sub><b>Tom Rumpf</b></sub></a><br /><a href="https://github.com/verata-veritatis/pybit/commits?author=tomcru" title="Code">💻</a></td>
@@ -313,13 +316,3 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
 <!-- ALL-CONTRIBUTORS-LIST:END -->
 
 This project follows the [all-contributors](https://github.com/all-contributors/all-contributors) specification. Contributions of any kind welcome!
-
-## Donations
-
-I work on `pybit` in my spare time, along with other contributors. If you like the project and want to donate, you can do so to the following addresses:
-
-```
-XTZ: tz1hKHdZeHf2LMpyJmZzj4eteF7tNNP2c97C
-BTC: bc1q9tamcc7hmcwya42mkplahrvqvkcr52yd56um69
-ETH: 0xDe4BbEB308A995FF3a8De98F70943D756EcE058D
-```
