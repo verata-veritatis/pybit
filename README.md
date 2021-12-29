@@ -98,7 +98,7 @@ Check out the example python files or the list of endpoints below for more infor
 endpoints and methods. More documentation on the `HTTP` methods can
 be found at:
 - https://github.com/verata-veritatis/pybit/blob/master/docs/HTTP.md
-- https://github.com/verata-veritatis/pybit/blob/master/examples/http.py
+- https://github.com/verata-veritatis/pybit/blob/master/examples/http_example.py
 
 Usage examples on the `WebSocket` methods can be found at:
 - https://github.com/verata-veritatis/pybit/blob/master/examples/websocket_example.py
