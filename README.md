@@ -36,7 +36,6 @@ Python3 API connector for Bybit's HTTP and Websockets APIs.
       + [Private Topics](#private-topics-spot)
 - [Contact](#contact)
 - [Contributors](#contributors)
-- [Donations](#donations)
 
 ## About
 Put simply, `pybit` (Python + Bybit) is a lightweight one-stop-shop module for the Bybit HTTP and WebSocket APIs. I was personally never a fan of auto-generated connectors that used a mosh-pit of various modules you didn't want (sorry, `bravado`) and wanted to build my own Python3-dedicated connector with very little external resources. The goal of the connector is to provide traders and developers with an easy-to-use high-performing module that has an active issue and discussion board leading to consistent improvements.
