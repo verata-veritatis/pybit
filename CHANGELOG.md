@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.4] - 2021-12-30
+### Added
+- `endpoint` arg to `get_active_order()`
+
+### Fixed
+- A Websocket test case, by raising an exception instead of logging
+
 ## [1.3.3] - 2021-12-24
 - Improve `get_risk_limit()`
   - Fixed: call this endpoint without authentication

@@ -35,7 +35,7 @@ except ImportError:
     from json.decoder import JSONDecodeError
 
 # Versioning.
-VERSION = '1.3.3'
+VERSION = '1.3.4'
 
 
 class HTTP:
@@ -514,24 +514,30 @@ class HTTP:
         executor.shutdown()
         return [execution.result() for execution in executions]
 
-    def get_active_order(self, **kwargs):
+    def get_active_order(self, endpoint="", **kwargs):
         """
         Gets an active order. For more information, see
         https://bybit-exchange.github.io/docs/inverse/#t-getactive.
 
         :param kwargs: See
             https://bybit-exchange.github.io/docs/inverse/#t-getactive.
+        :param endpoint: The endpoint path, such as "/spot/v1/order".
+            This allows the user to choose between which endpoint to use to
+            fetch a spot order.
         :returns: Request results as dictionary.
         """
 
-        if self.spot is True or kwargs.get('spot', '') is True:
-            suffix = '/spot/v1/history-orders'
-        elif kwargs.get('symbol', '').endswith('USDT'):
-            suffix = '/private/linear/order/list'
-        elif kwargs.get('symbol', '')[-2:].isdigit():
-            suffix = '/futures/private/order/list'
+        if endpoint:
+            suffix = endpoint
         else:
-            suffix = '/v2/private/order/list'
+            if self.spot is True or kwargs.get('spot', '') is True:
+                suffix = '/spot/v1/history-orders'
+            elif kwargs.get('symbol', '').endswith('USDT'):
+                suffix = '/private/linear/order/list'
+            elif kwargs.get('symbol', '')[-2:].isdigit():
+                suffix = '/futures/private/order/list'
+            else:
+                suffix = '/v2/private/order/list'
 
         return self._submit_request(
             method='GET',
