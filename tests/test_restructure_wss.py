@@ -1,41 +1,65 @@
-from pybit import inverse_perpetual, usdt_perpetual
+import os
 from time import sleep
-
 import logging
-logging.basicConfig(filename="pybit_restructure_wss.log", level=logging.DEBUG, format="%(asctime)s %(levelname)s %(message)s")
+import unittest
 
+from pybit import usdt_perpetual, inverse_perpetual
 
-api_key = ""
-api_secret = ""
+log_format = "%(asctime)s %(levelname)s %(name)s %(threadName)s : %(message)s"
+logging.basicConfig(level=logging.DEBUG, format=log_format)
+logger = logging.getLogger('test')
+
+API_KEY = os.environ.get('BYBIT_API_KEY', '')
+API_SECRET = os.environ.get('BYBIT_API_SECRET', '')
 
 
 def instrument_info_callback(message):
-    print(f"instrument_info_callback()")
-    print(message)
-    pass
+    logger.info("instrument_info_callback got message: %s", message)
+
+
+def orderbook_callback(message):
+    logger.info("orderbook_callback got message: %s", message)
 
 
 def position_callback(message):
-    print(f"position_callback()")
-    print(message)
+    logger.info("position_callback got message: %s", message)
 
 
-#inverse_ws = inverse_perpetual.WebSocket("wss://stream.bybit.com/realtime", api_key=api_key, api_secret=api_secret)
-#
-#inverse_instrument_info_sub = inverse_ws.custom_topic_stream("instrument_info.100ms.BTCUSD", instrument_info_callback)
-#inverse_position_sub = inverse_ws.position_stream(position_callback)
+class HTTPTest(unittest.TestCase):
 
+    @staticmethod
+    def sleep_loop(loops=5, sleep_secs=1):
+        i = 0
+        while i < loops:
+            i = i + 1
+            sleep(sleep_secs)
+            logger.debug(f"Sleeping {i * sleep_secs}s out of {loops * sleep_secs}s")
 
-usdt_public_ws = usdt_perpetual.PublicWebSocket("wss://stream.bybit.com/realtime_public")
-usdt_private_ws = usdt_perpetual.PrivateWebSocket("wss://stream.bybit.com/realtime_private", api_key=api_key, api_secret=api_secret)
+    def test_instrument_info(self):
+        # given
+        usdt_public_ws = usdt_perpetual.PublicWebSocket("wss://stream.bybit.com/realtime_public")
+        usdt_public_ws.custom_topic_stream("instrument_info.100ms.BTCUSDT",
+                                           instrument_info_callback)
 
-usdt_instrument_info_sub = usdt_public_ws.custom_topic_stream("instrument_info.100ms.BTCUSDT", instrument_info_callback)
-usdt_position_sub = usdt_private_ws.position_stream(position_callback)
+        # when then
+        self.sleep_loop(5)
+        usdt_public_ws.exit()
 
-while True:
-    # Proceed with trading strategy whilst still receiving callbacks for new
-    #  websocket messages
-    print(1)
-    sleep(1)
+    def test_inverse_instrument_info(self):
+        # given
+        inverse_ws = inverse_perpetual.WebSocket("wss://stream.bybit.com/realtime")
+        inverse_ws.custom_topic_stream("instrument_info.100ms.BTCUSD", instrument_info_callback)
+        # when then
+        self.sleep_loop(5)
+        inverse_ws.exit()
 
+    def test_position_callback(self):
+        # given
+        usdt_private_ws = usdt_perpetual.PrivateWebSocket(
+            "wss://stream-testnet.bybit.com/realtime_private",
+            api_key=API_KEY, api_secret=API_SECRET)
+        usdt_private_ws.position_stream(position_callback)
 
+        # when then
+        self.sleep_loop(5, 2)
+        usdt_private_ws.exit()
