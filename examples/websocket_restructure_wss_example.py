@@ -2,7 +2,7 @@ from pybit import inverse_perpetual, usdt_perpetual
 from time import sleep
 
 import logging
-logging.basicConfig(filename="pybit_restructure_wss.log", level=logging.DEBUG, format="%(asctime)s %(levelname)s %(message)s")
+logging.basicConfig(filename="websocket_restructure_wss_example.log", level=logging.DEBUG, format="%(asctime)s %(levelname)s %(message)s")
 
 
 api_key = ""
