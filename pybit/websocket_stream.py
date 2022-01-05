@@ -4,19 +4,28 @@ import time
 import json
 import hmac
 import logging
+import re
 
 
 logger = logging.getLogger(__name__)
 
 
+SUBDOMAIN_TESTNET = "stream-testnet"
+SUBDOMAIN_MAINNET = "stream"
+DOMAIN_MAIN = "bybit"
+DOMAIN_ALT = "bytick"
+
+
 class WebSocketManager:
-    def __init__(self, endpoint, callback_function, ws_name,
-                 api_key=None, api_secret=None,
+    def __init__(self, url, callback_function, ws_name,
+                 test, domain="", api_key=None, api_secret=None,
                  ping_interval=30, ping_timeout=10,
                  restart_on_error=True):
 
         # Set endpoint.
-        self.endpoint = endpoint
+        subdomain = SUBDOMAIN_TESTNET if test else SUBDOMAIN_MAINNET
+        domain = DOMAIN_MAIN if not domain else domain
+        url = url.format(SUBDOMAIN=subdomain, DOMAIN=domain)
 
         # Set API keys.
         self.api_key = api_key
@@ -25,7 +34,7 @@ class WebSocketManager:
         self.callback = callback_function
         self.ws_name = ws_name
         if api_key:
-            ws_name += " (Auth)"
+            self.ws_name += " (Auth)"
 
         # Setup the callback directory following the format:
         #   {
@@ -42,7 +51,7 @@ class WebSocketManager:
 
         # Set initial state, initialize dictionary and connect.
         self._reset()
-        self._connect(endpoint)
+        self._connect(url)
 
     def _on_open(self):
         """
@@ -156,12 +165,14 @@ class WebSocketManager:
 
 
 class FuturesWebSocketManager(WebSocketManager):
-    def __init__(self, endpoint, ws_name,
-                 api_key=None, api_secret=None):
-        super().__init__(endpoint, self._handle_incoming_message, ws_name,
-                         api_key=api_key, api_secret=api_secret)
+    def __init__(self, url, ws_name,
+                 test, domain="", api_key=None, api_secret=None):
+        super().__init__(
+            url, self._handle_incoming_message, ws_name,
+            test, domain=domain, api_key=api_key, api_secret=api_secret
+        )
 
-    def _subscribe(self, topic, callback):
+    def subscribe(self, topic, callback):
         if topic in self.callback_directory:
             raise Exception(f"You have already subscribed to this topic: "
                             f"{topic}")
@@ -174,9 +185,61 @@ class FuturesWebSocketManager(WebSocketManager):
         self.callback_directory[topic] = callback
 
     def _handle_incoming_message(self, message):
-        topic = message["topic"]
-        callback_function = self.callback_directory[topic]
-        callback_function(message)
+        def is_auth_message():
+            if message.get("request", {}).get("op") == "auth":
+                return True
+            else:
+                return False
+
+        def is_subscription_message():
+            if message.get("request", {}).get("op") == "subscribe":
+                return True
+            else:
+                return False
+
+        # Check auth
+        if is_auth_message():
+            # If we get successful futures auth, notify user
+            if message.get("success") is True:
+                logger.debug(f"Authorization for {self.ws_name} successful.")
+                self.auth = True
+            # If we get unsuccessful auth, notify user.
+            elif message.get("success") is False:
+                logger.debug(f"Authorization for {self.ws_name} failed. Please "
+                             f"check your API keys and restart.")
+
+        # Check subscription
+        elif is_subscription_message():
+            sub = message["request"]["args"]
+            # If we get successful futures subscription, notify user
+            if message.get("success") is True:
+                logger.debug(f"Subscription to {sub} successful.")
+            # Futures subscription fail
+            elif message.get("success") is False:
+                response = message["ret_msg"]
+                if "unknown topic" in response:
+                    logger.error("Couldn't subscribe to topic."
+                                 f"Error: {response}.")
+                self.callback_directory.pop(sub[0])
+
+        else:
+            topic = message["topic"]
+            callback_function = self.callback_directory[topic]
+            callback_function(message)
 
     def custom_topic_stream(self, topic, callback):
-        return self._subscribe(topic=topic, callback=callback)
+        return self.subscribe(topic=topic, callback=callback)
+
+
+def _identify_ws_method(input_wss_url, wss_dictionary):
+    """
+    This method matches the input_wss_url with a particular WSS method. This
+    helps ensure that, when subscribing to a custom topic, the topic
+    subscription message is sent down the correct WSS connection.
+    """
+    path = re.compile("(wss://)?([^/\s]+)(.*)")
+    input_wss_url_path = path.match(input_wss_url).group(3)
+    for wss_url, function_call in wss_dictionary.items():
+        wss_url_path = path.match(wss_url).group(3)
+        if input_wss_url_path == wss_url_path:
+            return function_call

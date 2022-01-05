@@ -7,6 +7,7 @@ logging.basicConfig(filename="websocket_restructure_wss_example.log", level=logg
 
 api_key = ""
 api_secret = ""
+test = True  # testnet or mainnet
 
 
 def instrument_info_callback(message):
@@ -18,19 +19,19 @@ def instrument_info_callback(message):
 def position_callback(message):
     print(f"position_callback()")
     print(message)
+    pass
 
 
-#inverse_ws = inverse_perpetual.WebSocket("wss://stream.bybit.com/realtime", api_key=api_key, api_secret=api_secret)
-#
-#inverse_instrument_info_sub = inverse_ws.custom_topic_stream("instrument_info.100ms.BTCUSD", instrument_info_callback)
-#inverse_position_sub = inverse_ws.position_stream(position_callback)
+inverse_ws = inverse_perpetual.WebSocket(test=test, api_key=api_key, api_secret=api_secret)
+
+inverse_instrument_info_sub = inverse_ws.instrument_info_stream(instrument_info_callback)
+inverse_position_sub = inverse_ws.position_stream(position_callback)
 
 
-usdt_public_ws = usdt_perpetual.PublicWebSocket("wss://stream.bybit.com/realtime_public")
-usdt_private_ws = usdt_perpetual.PrivateWebSocket("wss://stream.bybit.com/realtime_private", api_key=api_key, api_secret=api_secret)
+usdt_ws = usdt_perpetual.WebSocket(test=test, api_key=api_key, api_secret=api_secret)
 
-usdt_instrument_info_sub = usdt_public_ws.custom_topic_stream("instrument_info.100ms.BTCUSDT", instrument_info_callback)
-usdt_position_sub = usdt_private_ws.position_stream(position_callback)
+usdt_instrument_info_sub = usdt_ws.custom_topic_stream("instrument_info.100ms.BTCUSDT", instrument_info_callback, usdt_perpetual.PUBLIC_WSS)
+usdt_position_sub = usdt_ws.custom_topic_stream("position", position_callback, usdt_perpetual.PRIVATE_WSS)
 
 while True:
     # Proceed with trading strategy whilst still receiving callbacks for new
