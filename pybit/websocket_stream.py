@@ -231,6 +231,124 @@ class FuturesWebSocketManager(WebSocketManager):
         return self.subscribe(topic=topic, callback=callback)
 
 
+class SpotWebSocketManager(WebSocketManager):
+    def __init__(self, url, ws_name,
+                 test, domain="", api_key=None, api_secret=None):
+        super().__init__(
+            url, self._handle_incoming_message, ws_name,
+            test, domain=domain, api_key=api_key, api_secret=api_secret
+        )
+        self.private_websocket = True if api_key else False
+
+    def subscribe(self, topic, callback):
+        if not self.private_websocket:
+            conformed_topic = self._conform_topic(topic)
+            if conformed_topic in self.callback_directory:
+                raise Exception(f"You have already subscribed to this topic: "
+                                f"{topic}")
+            self.ws.send(json.dumps(topic))
+            topic = conformed_topic
+        self.callback_directory[topic] = callback
+
+    def _handle_incoming_message(self, message):
+        def is_ping_message():
+            if type(message) == dict and message.get("ping"):
+                # This is an unconventional ping message which looks like:
+                # {"ping":1641489450001}
+                # For now, we will not worry about responding to this,
+                # as websocket-client automatically sends conventional ping
+                # frames every 30 seconds, which successfully receive a pong
+                # frame response.
+                # https://websocket-client.readthedocs.io/en/latest/examples.html#ping-pong-usage
+                return True
+            else:
+                return False
+
+        def is_auth_message():
+            if type(message) == dict and message.get("auth"):
+                return True
+            else:
+                return False
+
+        def is_subscription_message():
+            if type(message) == dict and \
+                    (message.get("event") == "sub" or message.get("code")):
+                return True
+            else:
+                return False
+
+        if is_ping_message():
+            return
+
+        # Check auth
+        if is_auth_message():
+            # If we get successful spot auth, notify user
+            if message.get("auth") == "success":
+                logger.debug(f"Authorization for {self.ws_name} successful.")
+                self.auth = True
+            # If we get unsuccessful auth, notify user.
+            elif message.get("auth") == "fail":
+                logger.debug(f"Authorization for {self.ws_name} failed. Please "
+                             f"check your API keys and restart.")
+
+        # Check subscription
+        elif is_subscription_message():
+            # If we get successful spot subscription, notify user
+            if message.get("success") is True:
+                sub = self._conform_topic(message)
+                logger.debug(f"Subscription to {sub} successful.")
+            # Spot subscription fail
+            elif message.get("code") != "0":
+                # There is no way to confirm the incoming message is related to
+                #  any particular subscription message sent by the client, as
+                #  the incoming message only includes an error code and
+                #  message. Maybe a workaround could be developed in the future.
+                logger.debug(f"Subscription failed: {message}")
+                raise Exception("Spot subscription failed.")
+                #self.callback_directory.pop(self._conform_topic(message))
+
+        else:  # Standard topic push
+            if self.private_websocket:
+                for item in message:
+                    topic_name = item["e"]
+                    if self.callback_directory.get(topic_name):
+                        callback_function = self.callback_directory[topic_name]
+                        callback_function(item)
+            else:
+                callback_function = \
+                    self.callback_directory[self._conform_topic(message)]
+                callback_function(message)
+
+    @staticmethod
+    def _conform_topic(topic):
+        """
+        For spot API. Due to the fact that the JSON received in update
+        messages does not include a simple "topic" key, and parameters all
+        have their own separate keys, we need to compare the entire JSON.
+        Therefore, we need to strip the JSON of any unnecessary keys, cast some
+        values, and dump the JSON with sort_keys.
+        """
+        if isinstance(topic, str):
+            topic = json.loads(topic)
+        topic = topic.copy()
+        topic.pop("event", "")
+        topic.pop("symbolName", "")
+        topic["params"].pop("realtimeInterval", "")
+        topic["params"].pop("symbolName", "")
+        if topic["params"].get("klineType"):
+            topic["topic"] += "_" + topic["params"].get("klineType")
+            topic["params"].pop("klineType")
+        if topic["params"].get("binary"):
+            binary = topic["params"]["binary"]
+            binary = False if binary == "false" else "true"
+            topic["params"]["binary"] = binary
+        topic.pop("data", "")
+        topic.pop("f", "")
+        topic.pop("sendTime", "")
+        topic.pop("shared", "")
+        return json.dumps(topic, sort_keys=True, separators=(",", ":"))
+
+
 def _identify_ws_method(input_wss_url, wss_dictionary):
     """
     This method matches the input_wss_url with a particular WSS method. This
