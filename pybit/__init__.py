@@ -1066,6 +1066,7 @@ class HTTP:
         simultaneously.
 
         :param kwargs: See
+            https://bybit-exchange.github.io/docs/linear/#t-switchpositionmode,
             https://bybit-exchange.github.io/docs/inverse_futures/#t-switchpositionmode.
         :returns: Request results as dictionary.
         """
