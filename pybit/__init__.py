@@ -35,7 +35,7 @@ except ImportError:
     from json.decoder import JSONDecodeError
 
 # Versioning.
-VERSION = '1.3.4'
+VERSION = '1.3.5'
 
 
 class HTTP:
@@ -1072,6 +1072,8 @@ class HTTP:
 
         if kwargs.get('symbol', '')[-2:].isdigit():
             suffix = '/futures/private/position/switch-mode'
+        elif kwargs.get('symbol', '').endswith('USDT'):
+            suffix = '/private/linear/position/switch-mode'
         else:
             suffix = '/v2/private/position/switch-mode'
 
