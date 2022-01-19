@@ -43,10 +43,81 @@ class WebSocket:
             })
         subscribe(topic, callback)
 
+    def orderbook_25_stream(self, callback, symbol):
+        """
+        https://bybit-exchange.github.io/docs/linear/#t-websocketorderbook25
+        """
+        topic = "orderBookL2_25.{}"
+        self._ws_public_subscribe(topic, callback, symbol)
+
+    def orderbook_200_stream(self, callback, symbol):
+        """
+        https://bybit-exchange.github.io/docs/linear/#t-websocketorderbook200
+        """
+        topic = "orderBook_200.100ms.{}"
+        self._ws_public_subscribe(topic, callback, symbol)
+
+    def trade_stream(self, callback, symbol):
+        """
+        https://bybit-exchange.github.io/docs/linear/#t-websockettrade
+        """
+        topic = "trade.{}"
+        self._ws_public_subscribe(topic, callback, symbol)
+
     def instrument_info_stream(self, callback, symbol):
+        """
+        https://bybit-exchange.github.io/docs/linear/#t-websocketinstrumentinfo
+        """
         topic = "instrument_info.100ms.{}"
         self._ws_public_subscribe(topic, callback, symbol)
 
+    def kline_stream(self, callback, symbol, interval):
+        """
+        https://bybit-exchange.github.io/docs/linear/#t-websocketkline
+        """
+        topic = "candle.{}.{}"
+        topic = topic.format(str(interval), "{}")
+        self._ws_public_subscribe(topic, callback, symbol)
+
+    def liquidation_stream(self, callback, symbol):
+        """
+        https://bybit-exchange.github.io/docs/linear/#t-websocketliquidation
+        """
+        topic = "liquidation.{}"
+        self._ws_public_subscribe(topic, callback, symbol)
+
+    # Private topics
     def position_stream(self, callback):
+        """
+        https://bybit-exchange.github.io/docs/linear/#t-websocketposition
+        """
         topic = "position"
+        self._ws_private_subscribe(topic=topic, callback=callback)
+
+    def execution_stream(self, callback):
+        """
+        https://bybit-exchange.github.io/docs/linear/#t-websocketexecution
+        """
+        topic = "execution"
+        self._ws_private_subscribe(topic=topic, callback=callback)
+
+    def order_stream(self, callback):
+        """
+        https://bybit-exchange.github.io/docs/linear/#t-websocketorder
+        """
+        topic = "order"
+        self._ws_private_subscribe(topic=topic, callback=callback)
+
+    def stop_order_stream(self, callback):
+        """
+        https://bybit-exchange.github.io/docs/linear/#t-websocketstoporder
+        """
+        topic = "stop_order"
+        self._ws_private_subscribe(topic=topic, callback=callback)
+
+    def wallet_stream(self, callback):
+        """
+        https://bybit-exchange.github.io/docs/linear/#t-websocketwallet
+        """
+        topic = "wallet"
         self._ws_private_subscribe(topic=topic, callback=callback)
