@@ -1,8 +1,9 @@
 from .websocket_stream import SpotWebSocketManager
+from .websocket_stream import SPOT
 from .websocket_stream import _identify_ws_method
 
 
-ws_name = "Spot"
+ws_name = SPOT
 PUBLIC_V1_WSS = "wss://{SUBDOMAIN}.{DOMAIN}.com/spot/quote/ws/v1"
 PUBLIC_V2_WSS = "wss://{SUBDOMAIN}.{DOMAIN}.com/spot/quote/ws/v2"
 PRIVATE_WSS = "wss://{SUBDOMAIN}.{DOMAIN}.com/spot/ws"

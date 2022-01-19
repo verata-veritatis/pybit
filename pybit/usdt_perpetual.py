@@ -1,8 +1,9 @@
 from .websocket_stream import FuturesWebSocketManager
+from .websocket_stream import USDT_PERPETUAL
 from .websocket_stream import _identify_ws_method
 
 
-ws_name = "USDT Perp"
+ws_name = USDT_PERPETUAL
 PUBLIC_WSS = "wss://{SUBDOMAIN}.{DOMAIN}.com/realtime_public"
 PRIVATE_WSS = "wss://{SUBDOMAIN}.{DOMAIN}.com/realtime_private"
 
@@ -18,12 +19,12 @@ class WebSocket:
         self.api_key = api_key
         self.api_secret = api_secret
 
-    def _ws_public_subscribe(self, topic, callback):
+    def _ws_public_subscribe(self, topic, callback, symbol):
         if not self.ws_public:
             self.ws_public = FuturesWebSocketManager(
                 PUBLIC_WSS, ws_name, self.test, domain=self.domain
             )
-        self.ws_public.subscribe(topic, callback)
+        self.ws_public.subscribe(topic, callback, symbol)
 
     def _ws_private_subscribe(self, topic, callback):
         if not self.ws_private:
@@ -42,9 +43,9 @@ class WebSocket:
             })
         subscribe(topic, callback)
 
-    def instrument_info_stream(self, callback):
-        topic = "instrument_info.100ms.BTCUSDT"
-        self._ws_public_subscribe(topic, callback)
+    def instrument_info_stream(self, callback, symbol):
+        topic = "instrument_info.100ms.{}"
+        self._ws_public_subscribe(topic, callback, symbol)
 
     def position_stream(self, callback):
         topic = "position"

@@ -5,6 +5,7 @@ import json
 import hmac
 import logging
 import re
+from . import HTTP
 
 
 logger = logging.getLogger(__name__)
@@ -14,6 +15,10 @@ SUBDOMAIN_TESTNET = "stream-testnet"
 SUBDOMAIN_MAINNET = "stream"
 DOMAIN_MAIN = "bybit"
 DOMAIN_ALT = "bytick"
+
+INVERSE_PERPETUAL = "Inverse Perp"
+USDT_PERPETUAL = "USDT Perp"
+SPOT = "Spot"
 
 
 class WebSocketManager:
@@ -172,17 +177,56 @@ class FuturesWebSocketManager(WebSocketManager):
             test, domain=domain, api_key=api_key, api_secret=api_secret
         )
 
-    def subscribe(self, topic, callback):
-        if topic in self.callback_directory:
-            raise Exception(f"You have already subscribed to this topic: "
-                            f"{topic}")
+        self.private_topics = ["position", "execution", "order", "stop_order",
+                               "wallet"]
+
+        self.symbol_wildcard = "*"
+        self.symbol_separator = "|"
+
+    def subscribe(self, topic, callback, symbol=None):
+        if symbol is None:
+            symbol = []
+        elif type(symbol) == str:
+            symbol = [symbol]
+
+        def prepare_subscription_args(list_of_symbols):
+            """
+            Prepares the topic for subscription by formatting it with the
+            desired symbols.
+            """
+            def get_all_usdt_symbols():
+                query_symbol_response = HTTP().query_symbol()["result"]
+                for symbol_spec in query_symbol_response:
+                    symbol = symbol_spec["name"]
+                    if symbol.endswith("USDT"):
+                        list_of_symbols.append(symbol)
+                return list_of_symbols
+
+            if topic in self.private_topics:
+                # private topics do not support filters
+                return [topic]
+            elif list_of_symbols == self.symbol_wildcard or not list_of_symbols:
+                # different WSS URL support may or may not support the
+                # wildcard; for USDT, we need to manually get all symbols
+                if self.ws_name != USDT_PERPETUAL:
+                    return [topic.format(self.symbol_wildcard)]
+                list_of_symbols = get_all_usdt_symbols()
+
+            topics = []
+            for symbol in list_of_symbols:
+                topics.append(topic.format(symbol))
+            return topics
+
+        subscription_args = prepare_subscription_args(symbol)
+        self._check_callback_directory(subscription_args)
+
         self.ws.send(
             json.dumps({
                 "op": "subscribe",
-                "args": [topic]
+                "args": subscription_args
             })
         )
-        self.callback_directory[topic] = callback
+        self._set_callback(topic, callback)
 
     def _handle_incoming_message(self, message):
         def is_auth_message():
@@ -220,15 +264,42 @@ class FuturesWebSocketManager(WebSocketManager):
                 if "unknown topic" in response:
                     logger.error("Couldn't subscribe to topic."
                                  f"Error: {response}.")
-                self.callback_directory.pop(sub[0])
+                self._pop_callback(sub[0])
 
         else:
             topic = message["topic"]
-            callback_function = self.callback_directory[topic]
+            callback_function = self._get_callback(topic)
             callback_function(message)
 
     def custom_topic_stream(self, topic, callback):
         return self.subscribe(topic=topic, callback=callback)
+
+    def _extract_topic(self, topic_string):
+        """
+        Regex to return the topic without the symbol.
+        """
+        if topic_string in self.private_topics:
+            return topic_string
+        topic_without_symbol = re.match(r".*(\..*|)(?=\.)", topic_string)
+        return topic_without_symbol[0]
+
+    def _check_callback_directory(self, topics):
+        for topic in topics:
+            if topic in self.callback_directory:
+                raise Exception(f"You have already subscribed to this topic: "
+                                f"{topic}")
+
+    def _set_callback(self, topic, callback_function):
+        topic = self._extract_topic(topic)
+        self.callback_directory[topic] = callback_function
+
+    def _get_callback(self, topic):
+        topic = self._extract_topic(topic)
+        return self.callback_directory[topic]
+
+    def _pop_callback(self, topic):
+        topic = self._extract_topic(topic)
+        self.callback_directory.pop(topic)
 
 
 class SpotWebSocketManager(WebSocketManager):
