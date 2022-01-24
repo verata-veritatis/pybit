@@ -283,6 +283,14 @@ class FuturesWebSocketManager(WebSocketManager):
         topic_without_symbol = re.match(r".*(\..*|)(?=\.)", topic_string)
         return topic_without_symbol[0]
 
+    @staticmethod
+    def _extract_symbol(topic_string):
+        """
+        Regex to return the symbol without the topic.
+        """
+        symbol_without_topic = re.search(r"(?!.*\.)[A-Z*|]*$", topic_string)
+        return symbol_without_topic[0]
+
     def _check_callback_directory(self, topics):
         for topic in topics:
             if topic in self.callback_directory:

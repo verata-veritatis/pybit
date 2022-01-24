@@ -22,8 +22,8 @@ inverse_instrument_info_sub = inverse_ws.instrument_info_stream(callback, ["BTCU
 inverse_position_sub = inverse_ws.position_stream(callback)
 
 usdt_ws = usdt_perpetual.WebSocket(test=test, api_key=api_key, api_secret=api_secret)
-usdt_instrument_info_sub = usdt_ws.custom_topic_stream("instrument_info.100ms.BTCUSDT", callback, usdt_perpetual.PUBLIC_WSS)
-usdt_position_sub = usdt_ws.custom_topic_stream("position", callback, usdt_perpetual.PRIVATE_WSS)
+usdt_instrument_info_sub = usdt_ws.custom_topic_stream(usdt_perpetual.PUBLIC_WSS, "instrument_info.100ms.BTCUSDT", callback)
+usdt_position_sub = usdt_ws.custom_topic_stream(usdt_perpetual.PRIVATE_WSS, "position", callback)
 
 
 # Spot subscription:

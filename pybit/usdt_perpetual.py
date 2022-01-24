@@ -34,14 +34,18 @@ class WebSocket:
             )
         self.ws_private.subscribe(topic, callback)
 
-    def custom_topic_stream(self, topic, callback, wss_url):
+    def custom_topic_stream(self, wss_url, topic, callback):
         subscribe = _identify_ws_method(
             wss_url,
             {
                 PUBLIC_WSS: self._ws_public_subscribe,
                 PRIVATE_WSS: self._ws_private_subscribe
             })
-        subscribe(topic, callback)
+        symbol = FuturesWebSocketManager._extract_symbol(topic)
+        if symbol:
+            subscribe(topic, callback, symbol)
+        else:
+            subscribe(topic, callback)
 
     def orderbook_25_stream(self, callback, symbol):
         """
