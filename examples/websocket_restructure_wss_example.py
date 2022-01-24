@@ -18,7 +18,7 @@ def callback(message):
 
 # Inverse and USDT perpetual subscription:
 inverse_ws = inverse_perpetual.WebSocket(test=test, api_key=api_key, api_secret=api_secret)
-inverse_instrument_info_sub = inverse_ws.instrument_info_stream(callback)
+inverse_instrument_info_sub = inverse_ws.instrument_info_stream(callback, ["BTCUSD", "ETHUSD"])
 inverse_position_sub = inverse_ws.position_stream(callback)
 
 usdt_ws = usdt_perpetual.WebSocket(test=test, api_key=api_key, api_secret=api_secret)
