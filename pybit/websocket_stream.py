@@ -261,9 +261,8 @@ class FuturesWebSocketManager(WebSocketManager):
             # Futures subscription fail
             elif message.get("success") is False:
                 response = message["ret_msg"]
-                if "unknown topic" in response:
-                    logger.error("Couldn't subscribe to topic."
-                                 f"Error: {response}.")
+                logger.error("Couldn't subscribe to topic."
+                             f"Error: {response}.")
                 self._pop_callback(sub[0])
 
         else:
