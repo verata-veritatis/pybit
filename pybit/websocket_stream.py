@@ -5,6 +5,7 @@ import json
 import hmac
 import logging
 import re
+import copy
 from . import HTTP
 
 
@@ -408,7 +409,8 @@ class SpotWebSocketManager(WebSocketManager):
         """
         if isinstance(topic, str):
             topic = json.loads(topic)
-        topic = topic.copy()
+        else:
+            topic = copy.deepcopy(topic)
         topic.pop("event", "")
         topic.pop("symbolName", "")
         topic["params"].pop("realtimeInterval", "")
