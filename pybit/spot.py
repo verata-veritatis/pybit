@@ -53,18 +53,190 @@ class WebSocket:
             })
         subscribe(topic, callback)
 
-    def trade_v1_stream(self, callback):
+    def trade_v1_stream(self, callback, symbol):
+        """
+        https://bybit-exchange.github.io/docs/spot/#t-websockettrade
+        """
         topic = \
             {
                 "topic": "trade",
                 "event": "sub",
-                "symbol": "BTCUSDT",
+                "symbol": symbol,
                 "params": {
                     "binary": False
                 }
             }
         self._ws_public_v1_subscribe(topic, callback)
 
+    def realtimes_v1_stream(self, callback, symbol):
+        """
+        https://bybit-exchange.github.io/docs/spot/#t-websocketrealtimes
+        """
+        topic = \
+            {
+                "topic": "realtimes",
+                "event": "sub",
+                "symbol": symbol,
+                "params": {
+                    "binary": False
+                }
+            }
+        self._ws_public_v1_subscribe(topic, callback)
+
+    def kline_v1_stream(self, callback, symbol, interval):
+        """
+        https://bybit-exchange.github.io/docs/spot/#t-websocketkline
+        """
+        topic = \
+            {
+                "topic": "kline_{}".format(str(interval)),
+                "event": "sub",
+                "symbol": symbol,
+                "params": {
+                    "binary": False
+                }
+            }
+        self._ws_public_v1_subscribe(topic, callback)
+
+    def depth_v1_stream(self, callback, symbol):
+        """
+        https://bybit-exchange.github.io/docs/spot/#t-websocketdepth
+        """
+        topic = \
+            {
+                "topic": "depth",
+                "event": "sub",
+                "symbol": symbol,
+                "params": {
+                    "binary": False
+                }
+            }
+        self._ws_public_v1_subscribe(topic, callback)
+
+    def merged_depth_v1_stream(self, callback, symbol, dump_scale):
+        """
+        https://bybit-exchange.github.io/docs/spot/#t-websocketmergeddepth
+        """
+        topic = \
+            {
+                "topic": "mergedDepth",
+                "event": "sub",
+                "symbol": symbol,
+                "params": {
+                    "dumpScale": int(dump_scale),
+                    "binary": False
+                }
+            }
+        self._ws_public_v1_subscribe(topic, callback)
+
+    def diff_depth_v1_stream(self, callback, symbol):
+        """
+        https://bybit-exchange.github.io/docs/spot/#t-websocketdiffdepth
+        """
+        topic = \
+            {
+                "topic": "diffDepth",
+                "event": "sub",
+                "symbol": symbol,
+                "params": {
+                    "binary": False
+                }
+            }
+        self._ws_public_v1_subscribe(topic, callback)
+
+    def depth_v2_stream(self, callback, symbol):
+        """
+        https://bybit-exchange.github.io/docs/spot/#t-websocketv2depth
+        """
+        topic = \
+            {
+                "topic": "trade",
+                "event": "sub",
+                "params": {
+                    "symbol": symbol,
+                    "binary": False
+                }
+            }
+        self._ws_public_v2_subscribe(topic, callback)
+
+    def kline_v2_stream(self, callback, symbol, interval):
+        """
+        https://bybit-exchange.github.io/docs/spot/#t-websocketv2kline
+        """
+        topic = \
+            {
+                "topic": "kline",
+                "event": "sub",
+                "params": {
+                    "symbol": symbol,
+                    "klineType": interval,
+                    "binary": False
+                }
+            }
+        self._ws_public_v2_subscribe(topic, callback)
+
+    def trade_v2_stream(self, callback, symbol):
+        """
+        https://bybit-exchange.github.io/docs/spot/#t-websocketv2trade
+        """
+        topic = \
+            {
+                "topic": "trade",
+                "event": "sub",
+                "params": {
+                    "symbol": symbol,
+                    "binary": False
+                }
+            }
+        self._ws_public_v2_subscribe(topic, callback)
+
+    def book_ticker_v2_stream(self, callback, symbol):
+        """
+        https://bybit-exchange.github.io/docs/spot/#t-websocketv2bookticker
+        """
+        topic = \
+            {
+                "topic": "bookTicker",
+                "event": "sub",
+                "params": {
+                    "symbol": symbol,
+                    "binary": False
+                }
+            }
+        self._ws_public_v2_subscribe(topic, callback)
+
+    def realtimes_v2_stream(self, callback, symbol):
+        """
+        https://bybit-exchange.github.io/docs/spot/#t-websocketv2realtimes
+        """
+        topic = \
+            {
+                "topic": "realtimes",
+                "event": "sub",
+                "params": {
+                    "symbol": symbol,
+                    "binary": False
+                }
+            }
+        self._ws_public_v2_subscribe(topic, callback)
+
     def outbound_account_info_stream(self, callback):
+        """
+        https://bybit-exchange.github.io/docs/spot/#t-outboundaccountinfo
+        """
         topic = "outboundAccountInfo"
+        self._ws_private_subscribe(topic=topic, callback=callback)
+
+    def execution_report_stream(self, callback):
+        """
+        https://bybit-exchange.github.io/docs/spot/#t-executionreport
+        """
+        topic = "executionReport"
+        self._ws_private_subscribe(topic=topic, callback=callback)
+
+    def ticket_info_stream(self, callback):
+        """
+        https://bybit-exchange.github.io/docs/spot/#t-ticketinfo
+        """
+        topic = "ticketInfo"
         self._ws_private_subscribe(topic=topic, callback=callback)
