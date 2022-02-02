@@ -317,17 +317,47 @@ class SpotWebSocketManager(WebSocketManager):
             url, self._handle_incoming_message, ws_name,
             test, domain=domain, api_key=api_key, api_secret=api_secret
         )
+        self.public_v1_websocket = True if url.endswith("v1") else False
+        self.public_v2_websocket = True if url.endswith("v2") else False
         self.private_websocket = True if api_key else False
 
     def subscribe(self, topic, callback):
-        if not self.private_websocket:
-            conformed_topic = self._conform_topic(topic)
-            if conformed_topic in self.callback_directory:
-                raise Exception(f"You have already subscribed to this topic: "
-                                f"{topic}")
-            self.ws.send(json.dumps(topic))
-            topic = conformed_topic
-        self.callback_directory[topic] = callback
+        """
+        Formats and sends the subscription message, given a topic. Saves the
+        provided callback function, to be called by incoming messages.
+        """
+        def format_topic_with_multiple_symbols(topic):
+            symbol = topic["symbol"]
+            if type(symbol) == str:
+                return topic
+            elif type(symbol) == list:
+                symbol_string = ""
+                for item in symbol:
+                    symbol_string += item + ","
+                symbol_string = symbol_string[:-1]
+                symbol = symbol_string
+            else:
+                raise Exception(f"Could not recognise symbol: "
+                                f"({type(symbol)}) {symbol}")
+            topic["symbol"] = symbol
+            return topic
+
+        if self.private_websocket:
+            # Spot private topics don't need a subscription message
+            self._set_callback(topic, callback)
+            return
+
+        conformed_topic = self._conform_topic(topic)
+
+        if conformed_topic in self.callback_directory:
+            raise Exception(f"You have already subscribed to this topic: "
+                            f"{topic}")
+
+        if self.public_v1_websocket:
+            topic = format_topic_with_multiple_symbols(topic)
+        self.ws.send(json.dumps(topic))
+        topic = conformed_topic
+        self._set_callback(topic, callback)
 
     def _handle_incoming_message(self, message):
         def is_ping_message():
@@ -384,7 +414,6 @@ class SpotWebSocketManager(WebSocketManager):
                 #  message. Maybe a workaround could be developed in the future.
                 logger.debug(f"Subscription failed: {message}")
                 raise Exception("Spot subscription failed.")
-                #self.callback_directory.pop(self._conform_topic(message))
 
         else:  # Standard topic push
             if self.private_websocket:
@@ -413,8 +442,10 @@ class SpotWebSocketManager(WebSocketManager):
             topic = copy.deepcopy(topic)
         topic.pop("event", "")
         topic.pop("symbolName", "")
+        topic.pop("symbol", "")
         topic["params"].pop("realtimeInterval", "")
         topic["params"].pop("symbolName", "")
+        topic["params"].pop("symbol", "")
         if topic["params"].get("klineType"):
             topic["topic"] += "_" + topic["params"].get("klineType")
             topic["params"].pop("klineType")
@@ -422,11 +453,31 @@ class SpotWebSocketManager(WebSocketManager):
             binary = topic["params"]["binary"]
             binary = False if binary == "false" else "true"
             topic["params"]["binary"] = binary
+        if topic["params"].get("dumpScale"):
+            topic["params"]["dumpScale"] = int(topic["params"]["dumpScale"])
         topic.pop("data", "")
         topic.pop("f", "")
         topic.pop("sendTime", "")
         topic.pop("shared", "")
         return json.dumps(topic, sort_keys=True, separators=(",", ":"))
+
+    def _set_callback(self, topic, callback_function):
+        topic = self._conform_topic(topic)
+        self.callback_directory[topic] = callback_function
+
+    def _get_callback(self, topic):
+        topic = self._conform_topic(topic)
+        return self.callback_directory[topic]
+
+    def _pop_callback(self, topic):
+        topic = self._conform_topic(topic)
+        self.callback_directory.pop(topic)
+
+    def _check_callback_directory(self, topics):
+        for topic in topics:
+            if topic in self.callback_directory:
+                raise Exception(f"You have already subscribed to this topic: "
+                                f"{topic}")
 
 
 def _identify_ws_method(input_wss_url, wss_dictionary):
