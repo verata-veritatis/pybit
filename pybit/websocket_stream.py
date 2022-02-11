@@ -158,6 +158,7 @@ class WebSocketManager:
         """
         self.exited = False
         self.auth = False
+        self.data = {}
 
     def exit(self):
         """
@@ -242,6 +243,34 @@ class FuturesWebSocketManager(WebSocketManager):
             else:
                 return False
 
+        def process_delta_orderbook():
+            # Create self.data
+            try:
+                self.data[topic]
+            except KeyError:
+                self.data[topic] = []
+
+            # Record the initial snapshot.
+            if "snapshot" in message["type"]:
+                self.data[topic] = message["data"]
+
+            # Make updates according to delta response.
+            elif "delta" in message["type"]:
+
+                # Delete.
+                for entry in message["data"]["delete"]:
+                    index = _find_index(self.data[topic], entry, "id")
+                    self.data[topic].pop(index)
+
+                # Update.
+                for entry in message["data"]["update"]:
+                    index = _find_index(self.data[topic], entry, "id")
+                    self.data[topic][index] = entry
+
+                # Insert.
+                for entry in message["data"]["insert"]:
+                    self.data[topic].append(entry)
+
         # Check auth
         if is_auth_message():
             # If we get successful futures auth, notify user
@@ -268,8 +297,15 @@ class FuturesWebSocketManager(WebSocketManager):
 
         else:
             topic = message["topic"]
+            if "orderBook" in topic:
+                process_delta_orderbook()
+                callback_data = copy.deepcopy(message)
+                callback_data["type"] = "snapshot"
+                callback_data["data"] = self.data[topic]
+            else:
+                callback_data = message
             callback_function = self._get_callback(topic)
-            callback_function(message)
+            callback_function(callback_data)
 
     def custom_topic_stream(self, topic, callback):
         return self.subscribe(topic=topic, callback=callback)
@@ -386,6 +422,48 @@ class SpotWebSocketManager(WebSocketManager):
             else:
                 return False
 
+        def process_delta_orderbook():
+            # Create self.data
+            book_sides = {"b": message["data"][0]["b"],
+                          "a": message["data"][0]["a"]}
+            try:
+                self.data[topic]
+            except KeyError:
+                self.data[topic] = book_sides
+
+            # Record the initial snapshot.
+            if len(book_sides["b"]) == 200 and len(book_sides["a"]) == 200:
+                self.data[topic] = book_sides
+                return
+
+            # Make updates according to the response.
+            for side, entries in book_sides.items():
+                for entry in entries:
+                    # Delete.
+                    if float(entry[1]) == 0:
+                        index = _find_index(
+                            self.data[topic][side], entry, 0)
+                        self.data[topic][side].pop(index)
+                        continue
+
+                    # Insert.
+                    price_level_exists = \
+                        entry[0] in \
+                        [level[0] for level in self.data[topic][side]]
+                    if not price_level_exists:
+                        self.data[topic][side].append(entry)
+                        continue
+
+                    # Update.
+                    qty_changed = entry[1] != next(
+                        level[1] for level in self.data[topic][side] if
+                        level[0] == entry[0])
+                    if price_level_exists and qty_changed:
+                        index = _find_index(
+                            self.data[topic][side], entry, 0)
+                        self.data[topic][side][index] = entry
+                        continue
+
         if is_ping_message():
             return
 
@@ -423,9 +501,16 @@ class SpotWebSocketManager(WebSocketManager):
                         callback_function = self.callback_directory[topic_name]
                         callback_function(item)
             else:
-                callback_function = \
-                    self.callback_directory[self._conform_topic(message)]
-                callback_function(message)
+                topic = self._conform_topic(message)
+                if "diffDepth" in topic:
+                    process_delta_orderbook()
+                    callback_data = copy.deepcopy(message)
+                    callback_data["data"][0]["b"] = self.data[topic]["b"]
+                    callback_data["data"][0]["a"] = self.data[topic]["a"]
+                else:
+                    callback_data = message
+                callback_function = self.callback_directory[topic]
+                callback_function(callback_data)
 
     @staticmethod
     def _conform_topic(topic):
@@ -492,3 +577,10 @@ def _identify_ws_method(input_wss_url, wss_dictionary):
         wss_url_path = path.match(wss_url).group(3)
         if input_wss_url_path == wss_url_path:
             return function_call
+
+
+def _find_index(source, target, key):
+    """
+    Find the index in source list of the targeted ID.
+    """
+    return next(i for i, j in enumerate(source) if j[key] == target[key])
