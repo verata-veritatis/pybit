@@ -166,6 +166,7 @@ Usage examples on the `WebSocket` methods can be found at:
 | User Leverage (deprecated)                            | `user_leverage()` |
 | User Trade Records                                    | `user_trade_records()`  |
 | Closed Profit and Loss                                | `closed_profit_and_loss()` |
+| Query Trading Fee Rate                                | `query_trading_fee_rate()` |
 
 #### Risk Limit
 

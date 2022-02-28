@@ -53,6 +53,8 @@ my_position()
 change_margin()
 set_trading_stop()
 
+query_trading_fee_rate()
+
 get_risk_limit()
 set_risk_limit()
 
